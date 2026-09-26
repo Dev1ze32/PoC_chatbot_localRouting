@@ -1,0 +1,247 @@
+{
+  "source": {
+    "document": "UC-PnC Student Handbook (Learner's Handbook Revised Edition 2023-2028)",
+    "section": "Divisional Philosophy & Objectives",
+    "pages": "22-27",
+    "file": "inputs/UC-PnC-Student-Handbook-Manual.pdf",
+    "sha256": "38881d5fc72be4c09093b6a5bceffb215727be03fdf7420f1170aab360cd2fc9",
+    "extracted": "2026-09-26"
+  },
+  "note": "Closed list. The demo may only name a department printed here. Pages 22-27 are excluded from the chunked corpus as front matter but are the authority for this list.",
+  "divisions": [
+    {
+      "id": "OUP",
+      "name": "Office of the University President",
+      "printed": "OFFICE OF THE UNIVERSITY PRESIDENT",
+      "page": 23,
+      "departments": 1
+    },
+    {
+      "id": "OEVP",
+      "name": "Office of the Executive Vice President",
+      "printed": "OFFICE OF THE EXECUTIVE VICE PRESIDENT",
+      "page": 23,
+      "departments": 2
+    },
+    {
+      "id": "AA",
+      "name": "Academic Affairs",
+      "printed": "ACADEMIC AFFAIRS",
+      "page": 24,
+      "departments": 3
+    },
+    {
+      "id": "ADMIN",
+      "name": "Administration",
+      "printed": "ADMINISTRATION",
+      "page": 25,
+      "departments": 6
+    },
+    {
+      "id": "PRE",
+      "name": "Planning, Research, & Extension",
+      "printed": "PLANNING, RESEARCH, & EXTENSION",
+      "page": 26,
+      "departments": 4
+    },
+    {
+      "id": "SDAS",
+      "name": "Student Development & Auxiliary Services",
+      "printed": "STUDENT DEVELOPMENT & AUXILIARY SERVICES",
+      "page": 27,
+      "departments": 6
+    }
+  ],
+  "departments": [
+    {
+      "id": "office-of-the-university-secretary-board-secretary",
+      "name": "Office of the University Secretary / Board Secretary",
+      "division": "OUP",
+      "page": 23
+    },
+    {
+      "id": "management-information-systems-department",
+      "name": "Management Information Systems Department",
+      "division": "OEVP",
+      "page": 23
+    },
+    {
+      "id": "data-protection-department",
+      "name": "Data Protection Department",
+      "division": "OEVP",
+      "page": 23
+    },
+    {
+      "id": "colleges-and-senior-high-school",
+      "name": "Colleges and Senior High School",
+      "division": "AA",
+      "page": 24
+    },
+    {
+      "id": "office-of-the-university-registrar",
+      "name": "Office of the University Registrar",
+      "division": "AA",
+      "page": 24
+    },
+    {
+      "id": "office-of-the-university-library",
+      "name": "Office of the University Library",
+      "division": "AA",
+      "page": 24
+    },
+    {
+      "id": "university-health-department",
+      "name": "University Health Department",
+      "division": "ADMIN",
+      "page": 25
+    },
+    {
+      "id": "laboratory-services-and-disaster-risk-reduction-management-department",
+      "name": "Laboratory Services and Disaster Risk Reduction Management Department",
+      "division": "ADMIN",
+      "page": 25
+    },
+    {
+      "id": "property-management-and-general-services-department",
+      "name": "Property Management and General Services Department",
+      "division": "ADMIN",
+      "page": 25
+    },
+    {
+      "id": "human-resource-management-department",
+      "name": "Human Resource Management Department",
+      "division": "ADMIN",
+      "page": 25
+    },
+    {
+      "id": "entrepreneurship-and-business-development-department",
+      "name": "Entrepreneurship and Business Development Department",
+      "division": "ADMIN",
+      "page": 25
+    },
+    {
+      "id": "finance-department",
+      "name": "Finance Department",
+      "division": "ADMIN",
+      "page": 25
+    },
+    {
+      "id": "quality-management-and-planning-department",
+      "name": "Quality Management and Planning Department",
+      "division": "PRE",
+      "page": 26
+    },
+    {
+      "id": "community-and-extension-services-department",
+      "name": "Community and Extension Services Department",
+      "division": "PRE",
+      "page": 26
+    },
+    {
+      "id": "research-and-development-department",
+      "name": "Research and Development Department",
+      "division": "PRE",
+      "page": 26
+    },
+    {
+      "id": "knowledge-management-and-innovation-department",
+      "name": "Knowledge Management and Innovation Department",
+      "division": "PRE",
+      "page": 26
+    },
+    {
+      "id": "student-affairs-and-services-department",
+      "name": "Student Affairs and Services Department",
+      "division": "SDAS",
+      "page": 27
+    },
+    {
+      "id": "sports-and-development-department",
+      "name": "Sports and Development Department",
+      "division": "SDAS",
+      "page": 27
+    },
+    {
+      "id": "guidance-and-counseling-department",
+      "name": "Guidance and Counseling Department",
+      "division": "SDAS",
+      "page": 27
+    },
+    {
+      "id": "admissions-department",
+      "name": "Admissions Department",
+      "division": "SDAS",
+      "page": 27
+    },
+    {
+      "id": "placement-alumni-and-linkage-department",
+      "name": "Placement, Alumni, and Linkage Department",
+      "division": "SDAS",
+      "page": 27
+    },
+    {
+      "id": "gender-and-development-department",
+      "name": "Gender and Development Department",
+      "division": "SDAS",
+      "page": 27
+    }
+  ],
+  "display_rule": "Cards show the printed name from pp. 22-27. A name that is not printed is shown through its alias; an unresolved alias is shown as written.",
+  "aliases": [
+    {
+      "name": "University Library",
+      "department": "office-of-the-university-library",
+      "confirmed": true,
+      "evidence": "Same unit; pp. 22-27 print the full name 'Office of the University Library'.",
+      "decision": "Group decision 2026-09-26 (provisional): cards show the printed name."
+    },
+    {
+      "name": "Linkages Department",
+      "department": "placement-alumni-and-linkage-department",
+      "confirmed": true,
+      "evidence": "p. 27 prints 'Placement, Alumni, and Linkage Department'; the Internship Manual front matter reads 'PLACEMENT, ALUMNI, AND LINKAGES'. Already an open question in office_lookup.json.",
+      "decision": "Group decision 2026-09-26 (provisional): cards show the printed name."
+    },
+    {
+      "name": "Student Discipline Office",
+      "department": null,
+      "confirmed": false,
+      "evidence": "Named 7x in Handbook prose, not printed on pp. 22-27. Separate unit or a function inside Student Affairs and Services? Unresolved.",
+      "decision": "Skipped for now (parked 2026-09-26). Cards show 'Student Discipline Office' as the Handbook prose writes it."
+    },
+    {
+      "name": "Cashier's Office",
+      "department": "finance-department",
+      "confirmed": false,
+      "evidence": "Named 10x in corpus prose. Cash handling is in the Finance Department's printed function; reporting line not confirmed.",
+      "decision": "Not shown on any card: no office_lookup rule uses this name."
+    },
+    {
+      "name": "Accounting Department",
+      "department": "finance-department",
+      "confirmed": false,
+      "evidence": "Named 2x in corpus prose. Accounting is in the Finance Department's printed function; reporting line not confirmed.",
+      "decision": "Not shown on any card: no office_lookup rule uses this name."
+    }
+  ],
+  "decisions": [
+    {
+      "topic": "office names on cards",
+      "date": "2026-09-26",
+      "status": "provisional",
+      "decision": "Use the names printed on Handbook pp. 22-27. A corpus or lookup name is shown through its alias above."
+    },
+    {
+      "topic": "admission questions",
+      "date": "2026-09-26",
+      "status": "decided",
+      "decision": "Admission stays with the Office of the University Registrar, as office_lookup.json already routes it. p. 27 prints an Admissions Department; the group chose the Registrar."
+    },
+    {
+      "topic": "Student Discipline Office",
+      "date": "2026-09-26",
+      "status": "parked",
+      "decision": "Skipped for now. Revisit when someone can confirm whether it is a separate office."
+    }
+  ]
+}

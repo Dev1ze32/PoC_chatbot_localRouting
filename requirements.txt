@@ -1,0 +1,6 @@
+# Data tools and (later) the server. No OpenAI, no generator model.
+sentence-transformers>=2.7.0
+numpy>=1.24.0
+rank-bm25>=0.2.2
+snowballstemmer>=2.2
+# build_office_exemplars.py also needs the `pdftotext` command (poppler-utils).

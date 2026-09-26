@@ -1,0 +1,166 @@
+{
+  "note": "Written by the tools in tools/. One entry per generated file. Hand-written files (scope_exemplars.jsonl) and copied inputs (office_lookup.json) are not listed; see data/README.md.",
+  "files": {
+    "offices.json": {
+      "bytes": 8005,
+      "sha256": "3cfafd9a14eb5eb28b63472344dd143e9f2e14c05e02665fee2e5c1baa393f89",
+      "source": {
+        "document": "UC-PnC Student Handbook (Learner's Handbook Revised Edition 2023-2028)",
+        "section": "Divisional Philosophy & Objectives",
+        "pages": "22-27",
+        "file": "inputs/UC-PnC-Student-Handbook-Manual.pdf",
+        "sha256": "38881d5fc72be4c09093b6a5bceffb215727be03fdf7420f1170aab360cd2fc9",
+        "extracted": "2026-09-26"
+      },
+      "tool": "tools/build_office_exemplars.py",
+      "what": "Closed office list: divisions, departments, aliases"
+    },
+    "office_exemplars.jsonl": {
+      "bytes": 7304,
+      "fields": [
+        "department",
+        "name",
+        "division",
+        "page",
+        "statement"
+      ],
+      "key": "department",
+      "records": 22,
+      "sha256": "4e3008a5d28e42e912748e6894ed330a32af953c85c57cb7c27ca24f17d237f2",
+      "source": {
+        "document": "UC-PnC Student Handbook (Learner's Handbook Revised Edition 2023-2028)",
+        "section": "Divisional Philosophy & Objectives",
+        "pages": "22-27",
+        "file": "inputs/UC-PnC-Student-Handbook-Manual.pdf",
+        "sha256": "38881d5fc72be4c09093b6a5bceffb215727be03fdf7420f1170aab360cd2fc9",
+        "extracted": "2026-09-26"
+      },
+      "tool": "tools/build_office_exemplars.py",
+      "what": "One department function statement per line, verbatim; embedded at server start (Sprint 5), not stored"
+    },
+    "corpus_demo.jsonl": {
+      "bm25": {
+        "library": "rank_bm25",
+        "variant": "BM25Okapi",
+        "k1": 1.5,
+        "b": 0.75,
+        "epsilon": 0.25,
+        "built_from": "corpus_demo.jsonl `text`, in memory at start-up",
+        "tokenizer": {
+          "version": "regex-stopwords-snowball-v1",
+          "regex": "[a-z0-9]+",
+          "min_token_length": 2,
+          "stopwords": "NLTK English (153)",
+          "stemmer": "Snowball English (Porter2), snowballstemmer 3.1.1"
+        }
+      },
+      "bytes": 571137,
+      "excluded": 53,
+      "excluded_ids": [
+        "INTN-0001",
+        "INTN-0002",
+        "INTN-0003",
+        "INTN-0004",
+        "INTN-0005",
+        "INTN-0006",
+        "INTN-0007",
+        "INTN-0008",
+        "INTN-0009",
+        "INTN-0010",
+        "INTN-0011",
+        "INTN-0012",
+        "HDBK-0001",
+        "HDBK-0002",
+        "HDBK-0003",
+        "HDBK-0004",
+        "HDBK-0005",
+        "HDBK-0006",
+        "HDBK-0007",
+        "HDBK-0008",
+        "HDBK-0009",
+        "HDBK-0010",
+        "HDBK-0011",
+        "HDBK-0012",
+        "HDBK-0013",
+        "HDBK-0014",
+        "HDBK-0015",
+        "HDBK-0016",
+        "HDBK-0017",
+        "HDBK-0018",
+        "HDBK-0019",
+        "HDBK-0020",
+        "HDBK-0021",
+        "HDBK-0022",
+        "HDBK-0023",
+        "HDBK-0024",
+        "HDBK-0043",
+        "HDBK-0110",
+        "HDBK-0192",
+        "RSCH-0001",
+        "RSCH-0002",
+        "RSCH-0003",
+        "RSCH-0004",
+        "RSCH-0005",
+        "RSCH-0006",
+        "RSCH-0007",
+        "RSCH-0008",
+        "RSCH-0009",
+        "RSCH-0010",
+        "RSCH-0011",
+        "RSCH-0012",
+        "RSCH-0013",
+        "RSCH-0014"
+      ],
+      "fields": [
+        "row",
+        "document_id",
+        "title",
+        "source",
+        "revision_date",
+        "year",
+        "page_or_section",
+        "issuing_office",
+        "text"
+      ],
+      "filter": "keep if '>' in page_or_section (front matter removed)",
+      "key": "document_id",
+      "records": 311,
+      "sha256": "4f60d7fecc51c3fc2b95dafc73ec618198d50c74aaf9dbc0ec546ae060f4f6a8",
+      "source": "inputs/corpus.json",
+      "source_records": 364,
+      "source_sha256": "8ca8e916d46486fc9060ee9ba5a4376796adf02e349048b00486ae2586714fc3",
+      "tool": "tools/build_demo_corpus.py",
+      "what": "Knowledge base: one citable passage per line"
+    },
+    "embeddings.npy": {
+      "built_from": "corpus_demo.jsonl",
+      "built_from_sha256": "4f60d7fecc51c3fc2b95dafc73ec618198d50c74aaf9dbc0ec546ae060f4f6a8",
+      "bytes": 477824,
+      "dtype": "float32",
+      "embedding": {
+        "model": "BAAI/bge-small-en-v1.5",
+        "device": "cpu",
+        "dim": 384,
+        "normalize_embeddings": true,
+        "passage_instruction": null,
+        "query_instruction": "Represent this sentence for searching relevant passages: ",
+        "query_instruction_applies_to": [
+          "query vs passages",
+          "query vs office statements"
+        ],
+        "no_instruction_for": [
+          "query vs scope exemplars (question vs question)"
+        ]
+      },
+      "row_order": "row i = line i of corpus_demo.jsonl = record with row == i",
+      "sha256": "1ea84286f69071f6f5341802e29638a1152d845d2a3c2c49df36b396cf2e9f2a",
+      "shape": [
+        311,
+        384
+      ],
+      "tool": "tools/build_demo_corpus.py",
+      "what": "Passage vectors for dense retrieval"
+    }
+  },
+  "updated": "2026-09-26"
+}

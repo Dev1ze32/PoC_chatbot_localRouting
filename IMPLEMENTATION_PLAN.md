@@ -1,0 +1,1106 @@
+# PoC Implementation Plan — Query Routing Pipeline Demo
+**GRP 20 · Revision Item 1 · Prepared 2026-09-26**
+
+> Panel revision request: *"Show us a sample. We want to see the possible output of your
+> query routing pipeline on your website — for a cited answer, a referral, and a static
+> message."*
+
+---
+
+## 1. What this is, and what it is not
+
+| | |
+|---|---|
+| **Goal** | Let a panelist look at a screen and understand the three things the router can do, and see *why* it chose each one. |
+| **Is** | A local web page + a small local backend. Real corpus, real retrieval, real routing decision, real citations, real office lookup. |
+| **Is not** | The prototype. **No quantization. No QLoRA / fine-tuning. No answer-generation model. No timing claims. No evaluation run.** |
+| **Answer wording** | Quoted and framed from the retrieved passage. The slot where the 4-bit fine-tuned model will sit is left visibly empty and labelled. |
+| **Audience** | Panel + adviser. Screenshots go into the revision document. |
+
+### The one rule — write it on the screen, not just in the plan
+
+Every screen carries this line, permanently visible:
+
+> **Proof of concept.** Retrieval and routing are real. Answer wording is quoted from the
+> retrieved passage — the local model is not in this build. Nothing here is a measured result.
+
+**Why this line is non-negotiable.** The moment a panelist believes they are looking at the
+finished system, two questions arrive that we cannot answer yet: *"so what was your response
+time?"* and *"is that the quantized model talking?"* The banner kills both before they are
+asked, and it protects the manuscript — nothing from this demo is reportable as a finding
+under Objective 6, because no evaluated component produced it.
+
+**Say this out loud when you open the demo:** *"What you are about to see is the routing
+pipeline, not the language model. The routing is the part we designed ourselves, so that is
+the part we built first."*
+
+---
+
+## 2. Deliverables
+
+| # | Deliverable | Status |
+|---|---|---|
+| D1 | `IMPLEMENTATION_PLAN.md` — this file | done |
+| D1b | `SPRINTS.md` — the status board, sign-off log, parked items | done |
+| D2 | Reviewable design artifact (web page) | done |
+| D3 | `web/` — front end, three response cards + routing trace | sprints 2–3 |
+| D4 | `data/` — filtered demo corpus, office list, scope exemplars | sprint 1 |
+| D5 | `server/` — local API implementing the response contract | sprint 5 |
+| D6 | `docs/DEMO_SCRIPT.md` — the 9 queries and what to say | sprint 7 |
+| D7 | Screenshots for the revision document | sprint 3 |
+
+---
+
+## 3. Architecture: two tiers, one contract
+
+Build in tiers so the demo **cannot fail on stage**.
+
+```
+                    ┌──────────────────────────────────────────┐
+                    │  web/  (the only thing the panel sees)   │
+                    │  three response cards + routing trace    │
+                    └────────────────┬─────────────────────────┘
+                                     │  ONE response contract (§4)
+                    ┌────────────────┴─────────────────────────┐
+                    │                                          │
+        ┌───────────▼────────────┐            ┌────────────────▼─────────────┐
+        │  TIER 1 — Fixtures     │            │  TIER 2 — Live local API     │
+        │  fixtures/turns.json   │            │  BM25 + dense + office table │
+        │  no Python, no install │            │  panelist can type anything  │
+        │  always works          │            │  real scores in the trace    │
+        └────────────────────────┘            └──────────────────────────────┘
+```
+
+**Tier 1 is the insurance policy.** It is a single HTML file plus a JSON file of pre-recorded
+turns. It runs by double-clicking. No venv, no model load, no network, no borrowed-laptop
+surprises. Build it first and keep it working.
+
+**Tier 2 is the credibility.** Same page, same cards, same trace — the fixture file is
+swapped for a `fetch()` to `localhost`. A panelist typing their own question is the single
+most convincing moment available to us, so it is worth the extra day.
+
+The front end must not know which tier it is talking to. A toggle in the corner reads
+`Source: fixtures` / `Source: live`, and that is the only difference.
+
+### Why a contract first, and not "just build it"
+
+The response contract is the design decision that makes the two tiers interchangeable and
+makes the backend replaceable later without touching the UI. It is also the thing to show a
+panelist who asks *"how will the real model plug into this?"* — answer: it fills the `answer`
+field and the `citations` array; nothing else in the pipeline changes.
+
+---
+
+## 4. The response contract
+
+One question in, one object out. Every field on the screen comes from here.
+
+```json
+{
+  "query": "How do I borrow a book from the university library?",
+  "path": "A",
+  "path_label": "Cited answer",
+
+  "answer": "<string — the reply text shown to the student>",
+  "answer_source": "quoted_passage",
+
+  "citations": [
+    {
+      "passage_id": "HDBK-0171",
+      "document_title": "UC-PnC Student Handbook Manual",
+      "edition_year": "2023",
+      "page_or_section": "PART 3. STUDENT SUCCESS > CHAPTER IX LIBRARY SERVICES > Section 2 (p. 118)",
+      "issuing_office": "University Library",
+      "quote": "<the exact passage text, shown when the reader expands the citation>"
+    }
+  ],
+
+  "offices": [],
+
+  "trace": {
+    "embedding_calls": 1,
+    "gate1": {
+      "lexical_ok": true,  "bm25_top": 17.33, "bm25_threshold": 13.5,
+      "dense_ok":   true,  "cosine_top": 0.71, "cosine_threshold": 0.65,
+      "rule": "lexical_ok OR dense_ok",
+      "passed": true
+    },
+    "gate2": { "ran": false, "scope_similarity": 0.58, "threshold": 0.50, "in_scope": null },
+    "fusion": { "method": "RRF", "k": 60, "passages_kept": 3 },
+    "generator_calls": 1,
+    "citation_check": "passed",
+    "timings_ms": { "embed": 0, "lexical": 0, "dense": 0, "fuse": 0, "compose": 0, "total": 0 }
+  },
+
+  "disclaimer": "Answer wording is quoted from the retrieved passage. The local model is not in this build."
+}
+```
+
+**Field rules**
+
+- `path` is exactly `"A"`, `"B"`, or `"C"`. The UI switches card type on this one value.
+- Path A: `citations` non-empty, `offices` empty.
+- Path B: `answer` is the referral sentence, `citations` **empty**, `offices` has 1–3 entries.
+- Path C: `answer` is the fixed scope message, both arrays empty, `generator_calls: 0`.
+- `timings_ms` is present but **displayed as "—" in Tier 1** and labelled *indicative only*
+  in Tier 2. We do not show a number we would have to defend.
+
+---
+
+## 5. UI design
+
+### Layout
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│ ⚠ PROOF OF CONCEPT · retrieval and routing are real · answer wording is    │
+│   quoted from the passage · no model, no measurement          [trace ▸]   │
+├──────────────────────────────────────────┬────────────────────────────────┤
+│                                          │  ROUTING TRACE                 │
+│   student ▸  How do I borrow a book …    │  ───────────────────────────   │
+│                                          │  embed query          1 call   │
+│  ┌─ CITED ANSWER ──────────────────────┐ │  ┌ GATE 1 · evidence ───────┐  │
+│  │ Borrowing is limited to three       │ │  │ lexical  17.33 ≥ 13.5 ✓  │  │
+│  │ titles at a time for one week …     │ │  │ dense     0.71 ≥ 0.65 ✓  │  │
+│  │                                     │ │  │ lexical OR dense → PASS  │  │
+│  │ ── Source ─────────────────────────  │ │  └──────────────────────────┘  │
+│  │ Student Handbook Manual · 2023      │ │    GATE 2 · scope   not run     │
+│  │ Part 3 › Ch. IX Library Services    │ │  ┌ PATH A ─────────────────┐    │
+│  │ p. 118 · HDBK-0171                  │ │  │ 3 passages → answer     │    │
+│  │ University Library                  │ │  │ generator calls      1  │    │
+│  │ ▸ show the exact passage            │ │  │ citation check    pass  │    │
+│  └─────────────────────────────────────┘ │  └─────────────────────────┘    │
+│                                          │                                │
+├──────────────────────────────────────────┴────────────────────────────────┤
+│  DEMO QUESTIONS   [cited ×3]  [referral ×3]  [out of scope ×3]   type ▸   │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+At phone width the trace panel moves below the conversation. It stays available because a
+panelist may be looking over a shoulder on a phone-sized projector crop.
+
+### The three cards must be distinguishable with the projector's colour turned off
+
+Colour alone will not survive a bad projector. Each card differs in **three** ways:
+
+| | Path A — Cited answer | Path B — Office referral | Path C — Out of scope |
+|---|---|---|---|
+| **Left edge** | solid 4px rule | dashed 4px rule | none |
+| **Accent** | teal | amber | neutral grey |
+| **Header** | `CITED ANSWER` | `NO PASSAGE FOUND — REFERRAL` | `OUTSIDE SCOPE` |
+| **Body** | answer + Source block | referral sentence only | fixed message only |
+| **Extra** | expandable exact passage | 1–3 office chips + division | `generator calls: 0` badge |
+| **Never has** | — | any citation, any answer content | anything at all beyond the message |
+
+### Path A — cited answer card
+
+- Answer text.
+- A **Source** block carrying the four provenance fields plus the issuing office:
+  `document_title · edition_year` / `page_or_section` / `passage_id` / `issuing_office`.
+- `▸ show the exact passage` expands the verbatim quote.
+
+**Why the expandable quote earns its place.** It is the answer to *"how do we know it didn't
+make that up?"* — the panelist reads the answer, expands the passage, and sees the same words.
+No argument required. Open one during the demo; do not wait to be asked.
+
+### Path B — referral card
+
+- No answer content. One sentence: *"I could not find a passage in the manuals that answers
+  this. Based on the subject, this is handled by:"*
+- Then 1–3 office chips, each showing **office name + division**.
+- A short note: *"Offices come from a fixed list taken from the Student Handbook, pp. 22–27.
+  The system cannot name an office that is not on that list."*
+
+**Why 1–3 and not 1.** Some subjects genuinely sit across offices — discipline, scholarships,
+the computer laboratory. Naming a single office would be a guess presented as a fact; naming
+two is the honest output and it is what the design specifies.
+
+### Path C — out-of-scope card
+
+- The fixed message, flat, no icon, no accent.
+- One badge: `generator calls: 0`.
+
+**Why that badge is on the screen.** It is the only visible evidence of the efficiency
+argument: an out-of-scope question costs nothing, because the gate stops it before the
+generator. A panelist can see that claim instead of being told it.
+
+### Routing trace panel
+
+Shows, in order: `embed query · 1 call` → Gate 1 with both scores against both thresholds and
+the `OR` rule → Gate 2 (greyed and marked `not run` when Gate 1 passed) → the path block.
+
+**Why the trace is the most important thing on the page.** Without it the demo is a chatbot,
+and a chatbot is what the previous panel called "application only." With it, the demo is a
+picture of the router — the part we designed, the part that is the contribution. Present it
+open.
+
+Keep a `[trace ▸]` toggle so it can be collapsed for a clean screenshot.
+
+### Demo strip
+
+Nine preset questions as clickable chips, grouped by expected path. **Nobody types during the
+defense unless a panelist asks to.** Typos on a projector cost credibility and time.
+
+---
+
+## 6. Data preparation
+
+### 6.0 Storage format — records in JSONL, tables in JSON, vectors in NPY
+
+The knowledge base is a list of independent passages, so it is stored as **JSONL, one passage
+per line**, with its vectors in `embeddings.npy`. The same rule applies to the two exemplar
+sets, which are also lists of records that get embedded one by one.
+
+| Why JSONL for the knowledge base | What it buys the demo |
+|---|---|
+| Line *i* = passage *i* = vector row *i* | Each record also carries `"row": i`, so alignment is checked, not assumed |
+| Append-only growth | A new manual adds lines at the end; existing rows keep their numbers |
+| Damage is local | A bad record fails as "line 147", not as the whole file |
+| Readable with plain tools | `wc -l` counts passages, `grep` finds one, a diff shows which passage changed |
+| Streams | A reader never needs the whole file in memory; this matters for the full knowledge base, not for 311 passages |
+
+JSONL has no header, so build metadata (source hash, filter, excluded IDs, embedding settings)
+lives in `data/MANIFEST.json`. The manifest also records **the hash of the JSONL the matrix was
+built from**: if the JSONL is edited without re-embedding, the data report fails instead of
+the demo quietly citing the wrong passage.
+
+`offices.json` and `office_lookup.json` stay JSON: they are nested lookup tables, not record
+lists. The full explanation is in `data/README.md`.
+
+### 6.1 Demo corpus — `data/corpus_demo.jsonl`
+
+Source: `ai_context/routing/data/corpus.json` (364 passages, four provenance fields plus
+`issuing_office`).
+
+**Filter: keep only passages whose `page_or_section` contains a `>` breadcrumb.**
+Result: **364 → 311 passages.**
+
+**Why this filter is mandatory, not cosmetic.** I ran BM25 against the unfiltered corpus.
+For *"How do I request a copy of my academic records?"* the top-scoring passage was
+**HDBK-0001, p. 4 — the MANIFESTATION signature page.** The corpus still contains the
+acknowledgment page, the Mayor's message, the President's message, and the philosophy
+statements. Those passages are long, generic, and full of common words, which is exactly what
+BM25 rewards. Demoing on the unfiltered corpus means a real chance of citing the signature
+page on the projector.
+
+The 53 excluded passages are front matter: signature pages, executive messages, institutional
+philosophy and objectives, part title pages. None of them contain an answerable policy.
+Excluding them also matches the manuscript, which already treats front matter as out of scope
+for chunking.
+
+**Say this if asked:** *"Front matter is excluded — messages from officials, the signature
+page, philosophy statements. A passage is only admitted if it sits under a numbered chapter
+and section, because that is where policy lives."*
+
+### 6.2 Office list — `data/offices.json`
+
+**Source of authority: Student Handbook, "Divisional Philosophy and Objectives," pp. 22–27** —
+six divisions and the departments under each, printed by the university itself.
+
+| Division | Departments (as printed) | Page |
+|---|---|---|
+| Office of the University President | University Secretary / Board Secretary | 23 |
+| Office of the Executive Vice President | Management Information Systems · Data Protection | 23 |
+| Academic Affairs | Colleges and Senior High School · University Registrar · University Library | 24 |
+| Administration | University Health · Laboratory Services and DRRM · Property Management and General Services · Human Resource Management · Entrepreneurship and Business Development · Finance | 25 |
+| Planning, Research and Extension | Quality Management and Planning · Community and Extension Services · Research and Development · Knowledge Management and Innovation | 26 |
+| Student Development and Auxiliary Services | Student Affairs and Services · Sports and Development · Guidance and Counseling · Admissions · Placement, Alumni and Linkage · Gender and Development | 27 |
+
+**Use the full list — all six divisions — not just the offices that appear in the corpus.**
+
+The corpus's `issuing_office` field only ever names eleven offices, and only one of them
+(University Health) belongs to Administration. But Administration is exactly where the referral
+path fires (§7.4): broken air conditioners go to Property Management, a laboratory apron goes to
+Laboratory Services, an ATM goes to Finance. **If `offices.json` is built from the eleven
+offices in the corpus, the referral path cannot name the offices it most needs to name.**
+
+Two more notes on this file:
+
+- Pages 22–27 are **excluded from the chunked corpus** as front matter (§6.1) but are the
+  **authority for the office list**. Those are two different uses of the same pages, and they do
+  not conflict. Volunteer this before it is asked, because a panelist reading carefully will
+  notice a page both excluded and relied upon.
+- `office_lookup.json` (40 section→office rules, already built) supplies the office shown on
+  **Path A** cards, where a passage exists. Its `confirmed: false` entries are the researcher's
+  best-effort assignment. **Keep the flag in the file and do not delete it** — if asked whether
+  every mapping is verified, the honest answer is already on record.
+
+### 6.2b Office exemplars — `data/office_exemplars.jsonl`
+
+Required by §7.5. For each department, the function statement printed beside it on pp. 22–27,
+embedded once at startup. Path B scores the query against these and names the top 2–3.
+
+This is what makes a referral traceable to a page number instead of to a guess.
+
+### 6.3 Scope exemplars — `data/scope_exemplars.jsonl`
+
+The existing 20 exemplars are generic ("dispute a parking ticket", "apply for financial aid",
+"change my major"). **Rewrite them against our three manuals before the demo.**
+
+**Why.** A panelist who reads the file sees questions about a university that is not ours.
+The exemplars define what "in scope" means; if they describe someone else's university, the
+gate is calibrated to someone else's university. Replace with 20–25 questions drawn from the
+actual chapter titles: admission, enrolment, examinations, academic records, library
+services, health services, discipline, internship requirements, research title format, and so
+on.
+
+**As built (2026-09-26): 25 questions. 21 come from chapter titles; 4 come from department
+duties printed on pp. 23 and 25** (payments, buildings and facilities, science laboratories,
+the student portal). The group decided to keep those 4. Measured: without them, the ATM
+question (Finance) scores below the highest out-of-scope question and would get the
+out-of-scope message instead of a referral. The other referral questions score the same either
+way (`DATA_REPORT.md` §4 has the with/without table). None of the 25 is a demo question reworded
+(`DATA_REPORT.md` §4 checks this).
+
+### 6.4 BM25 tokenizer — `shared/tokenizer.py`
+
+**There is no BM25 index file, by design.** The index is built in memory at start-up from the
+`text` field of `corpus_demo.jsonl`. 311 passages index in milliseconds, so a stored copy would
+only be one more file that can go stale. The embeddings are stored because they take about two
+minutes to compute; BM25 is not, because it doesn't. The settings (`BM25Okapi`, k1 = 1.5,
+b = 0.75, tokenizer version) are recorded in `MANIFEST.json`.
+
+**One tokenizer, used at index time and at query time:**
+
+| Step | Example |
+|---|---|
+| NFKC + lowercase, regex words `[a-z0-9]+` | `Records?` → `records`, so punctuation never sticks to a word |
+| drop 1-character tokens | list markers `1.` `a.`, the `s` of `student's` |
+| drop English stopwords (NLTK list, vendored) | `what` `are` `the` `on` |
+| Snowball (Porter2) stemming | `policies` → `polici`; `enrollment` and `enrolment` → `enrol` |
+
+**Why.** The old tokenizer was `text.lower().split()`. `records?` and `records` were different
+terms, `policy` never matched `policies`, and a trailing full stop changed a score. The group's
+own 2026-08-04 retrieval design already named this as the root cause of overlapping score
+ranges; the first draft of this plan missed it. On the 311 passages the fix cuts the
+vocabulary from 8,225 to 3,200 terms and removes 3,157 punctuation-glued ones
+(`docs/DATA_REPORT.md` §5).
+
+**The stemmer matters for this corpus specifically:** the manuals use both *enrolment* and
+*enrollment*. Without stemming, a student who types one spelling misses passages written with
+the other.
+
+**Query instruction.** Passages are embedded without an instruction. A query gets BGE's
+retrieval instruction (`Represent this sentence for searching relevant passages: `) when
+matched against passages or office statements, and none when matched against scope exemplars
+(question vs question). This matches the setup used for the 2026-09-22 training samples.
+
+**Two things Sprint 5 must handle,** both found in the report: a question made only of
+stopwords (`What is it?`) tokenizes to nothing and must count as *no lexical evidence*, not an
+error; and 5 research-manual passages exceed BGE's 512-token limit and are cut off when
+embedded. BM25 still sees their full text.
+
+---
+
+## 7. Routing logic for the PoC
+
+| Stage | PoC behaviour | Same as the study? |
+|---|---|---|
+| Embed query | once, bge-small-en-v1.5, CPU, 384-d | yes |
+| Lexical retrieval | BM25 (rank_bm25) over 311 passages | yes |
+| Dense retrieval | cosine over a pre-computed matrix | yes |
+| Gate 1 | `lexical_ok OR dense_ok` | yes |
+| Fusion | RRF, k = 60, keep top 3 | yes |
+| Gate 2 | cosine vs scope exemplars | yes |
+| Generation | **absent** — answer is quoted from the top passage | **no** |
+| Citation verifier | field presence + passage-id match only | reduced |
+
+The pipeline is real up to the point where the model would sit. That boundary is where the
+banner sits too, and the two must agree.
+
+### 7.1 The threshold problem — found, measured, fixed
+
+> **Superseded numbers (2026-09-26).** Every bm25 and cos value in §7.1, §7.2 and §9 was
+> measured with the **old** whitespace tokenizer and **no** query instruction. Both were
+> replaced in Sprint 1 (§6.4). `docs/DATA_REPORT.md` §6 re-measures all 18 questions both ways.
+> What changed:
+>
+> - **The thresholds `bm25 ≥ 11.0`, `cos ≥ 0.70` are void.** Sprint 4 recalibrates them.
+> - **A/B/C are still separable** by some pair of cut-offs, on these 18 questions.
+> - **The honesty note below has reversed.** Under the new settings almost every Path A
+>   question clears Gate 1 on **cosine**, not bm25. The dense half now does the gating, and
+>   the cosine margin is thin (about 0.01 between the weakest A and the strongest B).
+> - **§7.2's proof example no longer holds.** Stemmed BM25 now also finds the correct
+>   admission passage (HDBK-0028). Sprint 4 needs a new example.
+> - **The lab-apron question now scores 11.73 on bm25**, tying the internship question,
+>   because *borrowed* now stems to match *borrowing* in library passages. It still routes to
+>   Path B on cosine, but it's no longer a clean example.
+>
+> The tables below are kept as the record of the first measurement. Don't quote them.
+
+**The old config sets `BM25_COVERAGE_THRESHOLD = 1.0`. Every query passes it.**
+
+Measured against the corpus: *"Write me a poem about my thesis"* scores **7.55** and *"Where
+can I eat near campus?"* scores **6.08**. Both clear a threshold of 1.0 comfortably. With the
+old setting, a poem request reaches Path A and receives a cited answer. **Paths B and C would
+never fire, and the demo would disprove its own thesis on the projector.**
+
+Cause: raw BM25 scores are unbounded and scale with query length and term rarity, so a single
+absolute threshold is not a meaningful criterion until it is calibrated against this corpus.
+
+### Calibration run — 17 queries, filtered corpus, both retrievers
+
+Measured 2026-09-26 on the 311-passage filtered corpus. Top-1 scores.
+
+| Expected | bm25 | cos | Query |
+|---|---|---|---|
+| A | 13.89 | 0.737 | What are the requirements for student admission? |
+| A | 12.21 | 0.746 | How do I request a copy of my academic records? |
+| A | 13.50 | 0.716 | How many hours is the required internship? |
+| A | 16.90 | 0.739 | How do I borrow a book from the university library? |
+| A | 18.05 | 0.729 | What is the format of the research title page? |
+| A | 18.35 | 0.643 | Is there a dental clinic on campus and what are its hours? |
+| A | 14.60 | 0.648 | Who do I contact to request a copy of my Form 137? |
+| B | 9.53 | 0.627 | How do I report a broken air conditioner in our classroom? |
+| B | 10.95 | 0.579 | Where is the nearest ATM on campus? |
+| B | 6.71 | 0.613 | Where do I return my borrowed laboratory apron? |
+| B | 10.58 | 0.616 | Who repairs the broken chairs in our classroom? |
+| B | 9.35 | 0.617 | Can I park my motorcycle inside the campus? |
+| C | 6.08 | 0.569 | Where can I eat near campus? |
+| C | 7.55 | 0.648 | Write me a poem about my thesis |
+| C | 4.76 | 0.510 | Will it rain tomorrow in Cabuyao? |
+| C | 10.54 | 0.478 | What is the capital of Japan? |
+| C | 6.54 | 0.544 | Can you help me debug my python code? |
+
+**Chosen for the demo: `bm25_threshold = 11.0`, `cosine_threshold = 0.70`, rule
+`lexical_ok OR dense_ok`.**
+
+Accuracy on this set: **Path A 7/7. Path C 5/5. Path B 5/5** with the five queries above,
+after they were selected by measurement rather than by guessing (§7.4 explains why that
+selection step was necessary).
+
+**Two things to be honest about in this table.**
+
+1. **The margin is thin.** Path A's lowest bm25 is 12.21; Path B's highest is 10.95. That is a
+   1.26 gap on 17 queries. It is a real separation but not a comfortable one, which is why P4
+   re-confirms on ~25 queries before the demo is locked.
+2. **On this set the lexical half decides everything.** No query clears `cos >= 0.70` without
+   also clearing `bm25 >= 11.0`, so the dense half currently contributes nothing to the *gate*.
+   It still earns its place in *ranking* (§7.2). Say it that way if asked — claiming the dense
+   half is doing gating work here would not survive someone reading the table.
+
+Record the thresholds **and this table** in `data/thresholds.json`. Show both thresholds in the
+trace panel beside every score, so the criterion is visible rather than asserted.
+
+### Length normalization was tried and rejected
+
+An obvious fix for BM25's unbounded scale is to divide the top score by the number of query
+terms. It was measured and it makes things worse:
+
+| Query | raw | normalized | cos | Problem |
+|---|---|---|---|---|
+| What is the capital of Japan? | 10.54 | **1.76** | 0.478 | 6 short terms, "what is the" matches everywhere — normalized score lands **above five of the seven Path A queries** |
+| Is there a dental clinic on campus and what are its hours? | 18.35 | **1.53** | 0.643 | a genuine Path A query, penalized for being 12 words long |
+
+Normalization trades one bias for another: it stops rewarding long queries and starts rewarding
+short ones. Raw score with a calibrated threshold performed better on this corpus. **Keep the
+raw score; keep the record that normalization was tested.** Being able to say "we tried it and
+here is the table" is worth more than the fix would have been.
+
+### 7.2 Dense retrieval is required, not optional — and here is the proof
+
+For *"What are the requirements for student admission?"*:
+
+| Retriever | Top passage | Correct? |
+|---|---|---|
+| BM25 | RSCH-0025 · Research Manual › Ch. I Student Terminal Program | **no** |
+| Dense | HDBK-0028 · Handbook › **Ch. I Student Admission** › Sec. 2 | **yes** |
+
+BM25 lost because "requirements" and "student" are common words that appear densely in the
+Research Manual. Dense retrieval found the actual admission chapter.
+
+**This one row is worth showing a panelist who asks why we use two retrievers instead of one.**
+It is a measurement from our own corpus, not a claim from a paper.
+
+Dense retrieval also costs us nothing we are avoiding: the model is pretrained, runs on CPU,
+and **`bge-small-en-v1.5` is already cached locally** — nothing is trained, nothing is
+quantized, and nothing downloads at demo time. Include it.
+
+### 7.3 Answer composition, with no model
+
+Path A `answer` is assembled deterministically: a lead-in naming the document and section,
+then the relevant sentences of the top passage verbatim, then the Source block. Marked
+`answer_source: "quoted_passage"`.
+
+**Why quoting instead of a small unquantized model.** Quoting cannot hallucinate, needs no
+GPU, is identical on every run, and is trivially honest — the panelist can expand the passage
+and compare. Adding a model would mean defending output quality from a model that is not the
+study's model, which is a fight with no prize.
+
+---
+
+### 7.4 Path B is harder to trigger than it looks — read before writing the demo script
+
+Three queries were first picked as referral examples by intuition. Measurement says all three
+are wrong:
+
+| Query | What retrieval found | Verdict |
+|---|---|---|
+| "wifi password in the computer laboratory" | HDBK-0190 · **Ch. XII Use of Computer Laboratory** | reaches Path A |
+| "tuition fee this semester" | HDBK-0037 · Ch. II Student Enrolment › Sec. 2 | reaches Path A |
+| "scholarship stipend released early" | HDBK-0134 · **Ch. IV Scholarship Program** | borderline |
+
+The chapters exist. Retrieval is working correctly — it found topically related policy text.
+What the passages do not contain is the *answer*: the manual has computer laboratory rules but
+no Wi-Fi password, enrolment procedures but no peso amounts.
+
+**This is the gap between topical similarity and answer sufficiency — the failure Zhang and Wu
+[26] measured**, where models answered anyway 65% to 91% of the time at the weakest evidence
+level. Gate 1 checks whether evidence was *retrieved*, not whether it is *sufficient*. A
+passage can clear Gate 1 and still not answer the question.
+
+Ten more candidates were tested. Seven also reached Path A — "office hours of the cashier"
+(18.44), "how do I reserve the audio visual room" (17.50), "replacement for my lost school ID"
+(16.92). On a 311-passage corpus that is entirely about university business, almost any
+university-flavoured question retrieves *something* plausible.
+
+### Where the referral path actually lives: the Administration coverage gap
+
+The five queries that genuinely fail Gate 1 have one thing in common.
+
+The three digitized manuals are **student-facing academic documents**. They cover Academic
+Affairs, Student Development and Auxiliary Services, and Planning/Research/Extension
+thoroughly. They say almost nothing about the **Administration** division — facilities,
+finance, human resources, laboratory services, property management.
+
+That is not a defect in the corpus. It is the corpus's real boundary, and it is precisely where
+a referral belongs.
+
+**Say this at the demo, before Path B:** *"These three manuals are student academic documents.
+They do not cover facilities, finance, or property management — those are the Administration
+division on page 25 of the handbook. So a question in that area has no passage to cite, and
+the system refers instead of guessing. That is the behaviour we want to show you."*
+
+That framing makes Path B look designed. Without it, Path B looks like retrieval failing.
+
+### The limit to concede
+
+**Do not claim the demo detects insufficient evidence inside a retrieved passage.** It does
+not, and the manuscript does not claim it either — that is the citation verifier (Objective 4)
+and the fine-tuned abstention behaviour (Objective 3), and **neither is in this build**.
+
+**If a panelist finds this themselves** — types a documented subject with an undocumented
+detail and gets a topically-related cited answer — say: *"Correct. Gate 1 checks whether
+evidence was retrieved. Checking whether the retrieved evidence is sufficient is the citation
+verifier in Objective 4 and the abstention behaviour we fine-tune for in Objective 3. Neither
+is in this build. That is this demo's limitation."*
+
+Do not improvise anything stronger. Conceding a real boundary cleanly costs far less than
+defending a claim the build cannot support.
+
+**The same point, turned forward:** in the finished system Gate 1 does not carry the whole
+load — the verifier and the adapter sit behind it. In this PoC, Gate 1 is alone, which is why
+it looks fragile here. That is a reason the study needs those components, not a reason the
+design is wrong.
+
+### 7.5 Path B's office suggestion needs its own mechanism
+
+> **Measured 2026-09-26: the mechanism below does not work as written.** Matching questions
+> against the printed function statements names the expected office for **1 of 4** referral
+> questions (`DATA_REPORT.md` §6c). Property Management ranks between 12th and 19th of 22 for
+> the air-conditioner and chair questions. Four variants were tried: statement only or name +
+> statement, each with and without the query instruction. All scored 1 of 5. The statements are
+> mission-style prose ("upgrading the physical infrastructure and facilities") and
+> bge-small-en does not bridge them to concrete questions ("broken air conditioner"). **A
+> replacement needs a group decision before Sprint 3.** Candidate: a small, hand-written
+> keyword rule per Administration department. That is closer to the manuscript's "rule-based
+> override against the closed office list" anyway.
+>
+> **Draft built (2026-09-26):** `data/office_keywords.json` (22 departments, each list tied to
+> its printed function) and `shared/office_match.py`. Results are in `DATA_REPORT.md` §6d. It is a
+> **draft**: the group must test it with 10 referral questions written without opening the file,
+> and decide the no-hit fallback, before Sprint 3.
+
+A measurement detail that would have produced a wrong answer on stage.
+
+For *"How do I report a broken air conditioner in our classroom?"* the nearest passage's
+`issuing_office` is **University Library** — meaningless, because the nearest passage is not
+relevant at all. On Path B **there is no admitted passage**, so the office cannot be read off
+one.
+
+The manuscript's Path B makes one short model call plus a rule-based override against the
+closed office list. There is no model in this build, so the PoC needs a substitute:
+
+**Embed each office's stated function from Student Handbook pp. 22–27, and take the top 2–3 by
+cosine against the query.** Store them in `data/office_exemplars.jsonl`.
+
+Why this is the right substitute: the exemplar text is the university's own printed description
+of what each department does, so the suggestion is traceable to a page number rather than to a
+model's opinion. It is offline, needs no training, and keeps the office list closed.
+
+**Say this if asked how the offices are chosen:** *"We match the question against each
+department's stated function as printed on pages 22 to 27 of the handbook. The system can only
+name a department that appears there."*
+
+### 7.6 What the B/C boundary actually depends on
+
+Gate 1 separates A from {B, C}. **Gate 2 alone separates B from C**, and it compares the query
+against the **scope exemplars**, not against passages — a different reference set with a
+different score distribution. So the `0.50` scope threshold in the old config is not
+transferable and must be calibrated separately once the exemplars are rewritten (§6.3).
+
+Calibrate Gate 2 last, after the exemplars are final. Calibrating it against the old
+generic-university exemplars would produce a number that means nothing.
+
+## 8. Sprint plan
+
+Seven sprints. **Each one ends in something you can look at and judge** — not in code that
+merely exists. No sprint starts until the previous sprint's review is signed off.
+
+```
+ S1        S2        S3          S4        S5        S6        S7
+ data  →  screen →  fixtures →  calib. →  backend → wire →   rehearse
+                    ▲                                        ▲
+                    SHIPPABLE                                DEFENSIBLE
+                    revision satisfied                        room-tested
+                    │
+                    └── GO / NO-GO on Tier 2 is decided here
+```
+
+### The review rule
+
+1. A sprint is not done when the work is written. It is done when **you have looked at the
+   named outcome and answered every check in its list.**
+2. **If a check fails, the fix happens inside that sprint.** A failed check is never carried
+   forward into the next one.
+3. **One exception:** if a check fails for a reason outside the sprint's control — an office
+   name nobody can confirm, a page the group cannot access — park it in the open list with an
+   owner's name and proceed. Do not block the whole build on one unconfirmed string.
+4. Every sprint also has a **scope guard** — what must *not* be in it yet. Building ahead is
+   the most likely way this slips, because the interesting work is always in the next sprint.
+
+---
+
+### Sprint 1 — Data foundation
+**Goal:** every file the demo reads exists and is correct.
+**Effort:** ~4–5 h. **Owner:** whoever did the original chunking, plus one reviewer for the office names.
+
+**Build**
+
+- `poc_thesis/` scaffold; copy the inputs in once (nothing reads from `ai_context/` afterwards)
+- `tools/build_demo_corpus.py` → `data/corpus_demo.jsonl` (311 passages) and
+  `data/embeddings.npy` (311 × 384 float32, row *i* = line *i*), plus `data/MANIFEST.json`
+- `data/offices.json` — 22 departments, 6 divisions, source page for each (§6.2)
+- `data/office_exemplars.jsonl` — each department's function statement, **verbatim** from pp. 22–27
+- `data/scope_exemplars.jsonl` — 20–25 questions rewritten for our three manuals (§6.3)
+- `data/office_lookup.json` — copied, `confirmed` flags intact
+- `shared/tokenizer.py` — the one BM25 tokenizer: regex + stopwords + Snowball (§6.4).
+  Sprint 5 imports it unchanged
+- `docs/DATA_REPORT.md` — generated by the tool, not hand-written. Includes the tokenizer
+  comparison and all 18 plan questions re-measured under the new settings
+
+**You review:** `docs/DATA_REPORT.md`
+
+| Check | |
+|---|---|
+| Spot-check 10 of the 53 excluded passages — is every one genuinely front matter? | ☐ |
+| Do all 22 department names match the handbook **exactly**, including "and" vs "&"? | ☐ |
+| Is every office function statement copied verbatim, with no paraphrasing? | ☐ |
+| Do the scope exemplars sound like UC-PnC students, not like a US university? | ☐ |
+| Does `embeddings.npy` have exactly 311 rows, and does row 0 match passage 0? | ☐ |
+| Read the token column in §5b. Does the new tokenizer keep the words that matter and drop the ones that don't? | ☐ |
+
+**Scope guard:** no UI, no routing, no thresholds. This sprint produces files and a report.
+
+**Why the report is generated rather than written:** a hand-written summary describes what
+someone believed the script did. A generated one describes what it did. The difference shows up
+at the worst possible moment.
+
+---
+
+### Sprint 2 — The screen, static
+**Goal:** settle what the panel will look at, before any logic exists to argue about.
+**Effort:** ~6–8 h.
+
+**Build**
+
+- `web/index.html`, `web/styles.css` — the banner, the three card types, the trace panel, the
+  demo strip (inert)
+- Exactly three turns, **hardcoded in the HTML**, using real passage text from Sprint 1
+- Light and dark, and phone width
+
+**You review:** open `web/index.html` by double-clicking it.
+
+| Check | |
+|---|---|
+| Screenshot it in grayscale — can you still tell the three cards apart? | ☐ |
+| **Project it.** Is the banner readable from the back of the room? | ☐ |
+| Does the Path A source block show all four provenance fields plus the issuing office? | ☐ |
+| Does Path B show **zero** citations and no answer content? | ☐ |
+| Does Path C show the `generator calls: 0` badge? | ☐ |
+| At phone width: trace panel moves below, and nothing scrolls sideways? | ☐ |
+
+**Scope guard:** no JavaScript, no fixture file, no interaction. Three static turns.
+
+**Review this one on the actual projector, not on a laptop.** Card colours that read clearly on
+an IPS screen can collapse into each other through a tired classroom projector, and that is why
+each card also differs in its left edge and its header text.
+
+---
+
+### Sprint 3 — Fixtures and interaction · **SHIPPABLE**
+**Goal:** a clickable offline demo covering all nine turns. **After this sprint the revision
+request is satisfied even if everything below slips.**
+**Effort:** ~8–10 h.
+
+**Build**
+
+- `docs/RESPONSE_CONTRACT.md` — §4, standalone
+- **First: re-select the nine demo questions** against `DATA_REPORT.md` §6 (new tokenizer
+  and query instruction). §9's scores are superseded. Swap out any question whose path is no
+  longer clean. The lab-apron question is the first candidate
+- `web/fixtures/turns.json` — nine contract-shaped turns with **real** passage text and the
+  **re-measured** scores, not invented ones and not §7.1's
+- `web/app.js` — renders any contract object; demo strip wired; trace toggle; source indicator
+
+**You review:** click all nine chips.
+
+| Check | |
+|---|---|
+| Does each of the nine chips produce its expected path? | ☐ |
+| Do the trace numbers match the calibration table, or were any invented to look tidy? | ☐ |
+| Does "show the exact passage" reveal text that genuinely contains the answer given? | ☐ |
+| Does it run with Wi-Fi off **and** with the venv deleted? | ☐ |
+| Read `app.js`: is there **one** renderer for all three paths, with no per-path special case? | ☐ |
+| Copy the folder to a USB stick and open it on a second machine — still works? | ☐ |
+
+**Scope guard:** no Python, no server, no live retrieval. The page reads a JSON file.
+
+**Why one renderer matters enough to check by reading the code:** three separate render
+functions will drift, and the first sign of drift is a Path B card that shows a citation on
+stage. The contract exists so that the path is data, not a branch in the UI.
+
+> **Take the revision-document screenshots here.** They are good enough, and they are in hand.
+
+---
+
+### GO / NO-GO — Tier 2
+Decided after Sprint 3, by the group, in one sitting.
+
+**Go** if Sprint 3 is signed off, the defense date is more than two weeks out, and one member can
+own the backend without dropping manuscript revisions. **The payoff:** a panelist typing their
+own question is the single most convincing moment available to you.
+
+**No-go** is a legitimate outcome, not a retreat. Sprint 3 already answers what the panel asked
+for. Say plainly: *"The demo runs on pre-recorded turns from the real corpus. A live version is
+the next step."*
+
+---
+
+### Sprint 4 — Calibration
+**Goal:** the thresholds are chosen from data, on the record.
+**Effort:** ~4 h.
+
+**Build**
+
+- `tools/calibrate.py` — runs a labelled query set through both retrievers, prints the table
+- Extend the set from 17 to ~25 queries (roughly +3 A, +3 B, +2 C)
+- `data/thresholds.json` — the chosen values, the full table, the date, and the corpus hash
+
+**You review:** the table.
+
+| Check | |
+|---|---|
+| Is Path A's minimum bm25 still above Path B's maximum? What is the margin now? | ☐ |
+| Did any of the three demo referral queries flip to Path A? | ☐ |
+| Does any query clear cosine without clearing bm25? | ☐ |
+| Is the corpus hash in the file the same corpus the demo ships? | ☐ |
+
+On the third check: **if the answer is no, the dense half is not doing gating work, and you must
+not say it is.** It earns its place in ranking (§7.2). That distinction is exactly the kind of
+thing a panelist who reads the table will catch.
+
+**If the margin collapses when the set grows, that is a finding, not a failure.** Record it,
+say the thresholds need the 80-question set to settle, and fall back to the Sprint 3 demo —
+which does not depend on thresholds at all.
+
+**Scope guard:** no backend. This sprint produces a table and two numbers.
+
+---
+
+### Sprint 5 — Live backend
+**Goal:** one endpoint returns the contract for any typed question.
+**Effort:** ~10–12 h.
+
+**Build**
+
+- `server/config.py` — thresholds, paths, the two fixed messages. **No API keys, no prompts, no
+  model names**
+- `server/retrieve.py` — BM25 + dense + RRF. BM25 built at start-up with
+  `shared/tokenizer.py` (import it; never re-implement it). An empty token list = no lexical
+  evidence
+- `server/route.py` — Gate 1, Gate 2, path selection
+- `server/offices.py` — section→office for Path A, exemplar match for Path B (§7.5)
+- `server/compose.py` — quote-based answer assembly
+- `server/contract.py`, `server/api.py` — one endpoint, `POST /ask`
+
+**You review:** run the nine demo queries through the API and diff against the fixtures.
+
+| Check | |
+|---|---|
+| Do all nine land on their expected path? | ☐ |
+| Does every response validate against `RESPONSE_CONTRACT.md`, field for field? | ☐ |
+| Does Path B return `citations: []` — **always**, on every query that routes there? | ☐ |
+| Does Path C return `generator_calls: 0` — always? | ☐ |
+| Does `grep -ri openai server/` return nothing at all? | ☐ |
+| Does it boot with the network adapter disabled? | ☐ |
+
+**Scope guard:** the front end is not touched this sprint. The API is tested with `curl` or a
+test script.
+
+`routing/generator.py` is not ported, not adapted, and not copied in commented-out. It calls
+`gpt-4o-mini`, and the previous panel called that version *"application only, not a
+contribution."*
+
+---
+
+### Sprint 6 — Wire and parity
+**Goal:** the front end talks to localhost without knowing it.
+**Effort:** ~4 h.
+
+**Build:** `fetch()` in `app.js`, the source toggle, and the degraded state.
+
+**You review:** type a question nobody planned for.
+
+| Check | |
+|---|---|
+| Is it the **same** render path for fixture and live, or did a second one appear? | ☐ |
+| Does an unknown question give a referral or the scope message — never a crash, never a spinner that never resolves? | ☐ |
+| **Kill the server mid-demo.** Does the page fall back to fixtures and say so on screen? | ☐ |
+| Does the source indicator tell the truth in both states? | ☐ |
+
+**The fallback matters more than the feature.** A demo that quietly degrades to fixtures when the
+server dies is a demo that cannot fail in front of the panel. Build the fallback before you
+polish anything else in this sprint.
+
+---
+
+### Sprint 7 — Rehearsal and revision assets
+**Goal:** it survives the room, and the revision document has what it needs.
+**Effort:** ~5 h.
+
+**Build**
+
+- `docs/DEMO_SCRIPT.md` — printable: the nine questions, the order, the lines to say
+- Screenshots: one per path, trace open and trace closed
+- A one-page **known limits** card — the §7.4 concession, in the presenter's pocket
+- A full offline run on the machine that will be in the room, through the projector that will be in the room
+
+**You review:** a timed dry run in front of the adviser.
+
+| Check | |
+|---|---|
+| Full demo in five minutes or less? (the slot is 20 minutes total) | ☐ |
+| Was the network adapter disabled for the whole run? | ☐ |
+| Did it run on the actual defense machine, not a group member's own laptop? | ☐ |
+| Did the presenter open the passage expander **without being prompted**? | ☐ |
+| Can whoever is presenting state the §7.4 limitation in one calm sentence? | ☐ |
+| Adviser signed off on the dry run? | ☐ |
+
+**Scope guard:** nothing new is built in this sprint. Anything discovered here that is not a bug
+goes on the open list for after the defense.
+
+---
+
+### Effort summary
+
+| Sprint | Outcome you review | Effort | Blocking? |
+|---|---|---|---|
+| 1 Data foundation | `DATA_REPORT.md` | 4–5 h | yes |
+| 2 The screen, static | `web/index.html`, on the projector | 6–8 h | yes |
+| 3 Fixtures + interaction | nine clickable turns · **shippable** | 8–10 h | yes |
+| — | **GO / NO-GO on Tier 2** | — | — |
+| 4 Calibration | the threshold table | 4 h | no |
+| 5 Live backend | nine API responses vs the fixtures | 10–12 h | no |
+| 6 Wire + parity | a question nobody planned for | 4 h | no |
+| 7 Rehearsal | a timed dry run | 5 h | yes |
+
+**Sprints 1–3 and 7 are the revision.** Sprints 4–6 are the upgrade. Roughly 23–28 h to a
+satisfied revision, roughly 45–50 h to a live demo.
+
+## 9. Demo script — nine questions
+
+Three per path, grouped. Verified against the corpus where noted.
+
+> **Scores in this section are superseded** (see the note at §7.1). **Sprint 3 re-selects and
+> re-verifies the demo set against `DATA_REPORT.md` §6 before any fixture is written.**
+
+### Path A — cited answer
+
+All verified against the filtered corpus.
+
+| Question | bm25 | cos | Expected source |
+|---|---|---|---|
+| What is the format of the research title page? | 18.05 | 0.729 | RSCH-0016 · Guidelines › Ch. I Student Terminal Program · Research and Development |
+| How do I borrow a book from the university library? | 16.90 | 0.739 | HDBK-0171 · Part 3 › Ch. IX Library Services · University Library |
+| How many hours is the required internship? | 13.50 | 0.716 | INTN-0013 · Guidelines › Sec. 1 General Policies (p. 22) · Linkages |
+
+Spares: *"What are the requirements for student admission?"* (13.89 / 0.737 — **use this one if a
+panelist asks why two retrievers**, see §7.2) and *"Is there a dental clinic on campus and what
+are its hours?"* (18.35 / 0.643). The short form *"Is there a dental clinic on campus?"* was
+never measured under that score; it scores 13.77 / 0.619 under the old settings.
+
+### Path B — office referral
+
+**All three verified by measurement to fail Gate 1 on both halves** at `bm25 < 11.0` and
+`cos < 0.70`, so they reach Path B by the routing rule rather than by stage management.
+
+| Question | bm25 | cos | Expected office · division |
+|---|---|---|---|
+| How do I report a broken air conditioner in our classroom? | 9.53 | 0.627 | Property Management and General Services · Administration |
+| Where do I return my borrowed laboratory apron? | 6.71 | 0.613 | Laboratory Services and DRRM · Administration |
+| Where is the nearest ATM on campus? | 10.95 | 0.579 | Finance · Administration |
+
+Two spares, also verified: *"Who repairs the broken chairs in our classroom?"* (10.58 / 0.616)
+and *"Can I park my motorcycle inside the campus?"* (9.35 / 0.617).
+
+**Do not substitute an untested question into this table.** Seven of ten intuitive candidates
+reached Path A when measured — including "office hours of the cashier" (bm25 18.44) and
+"replacement for my lost school ID" (16.92). Every referral example must be measured first.
+
+> The referral set is the honest half of the demo. **Volunteer it.** A group that only shows
+> questions its system answers looks like a group that only tested those questions.
+
+### Path C — out of scope
+
+| Question | Expected |
+|---|---|
+| Where can I eat near campus? | fixed message, `generator calls: 0` |
+| Write me a poem about my thesis. | fixed message, `generator calls: 0` |
+| Will it rain tomorrow in Cabuyao? | fixed message, `generator calls: 0` |
+
+### Order to present in
+
+1. **Path A first** — it is the happy case and it earns attention.
+2. **Expand the passage** — unprompted.
+3. **Path C second** — fast, obvious, and shows the zero-cost path.
+4. **Path B last, and slowly** — it is the subtle one. It is where the design shows judgement:
+   the system knows the question is about the university and still declines to answer.
+5. **Then offer the keyboard.** *"Would you like to try one?"* — only if P6 landed and P7 passed.
+
+---
+
+## 10. Questions the panel will ask at the demo
+
+| Question | Answer |
+|---|---|
+| "Is this the real system?" | "This is the routing pipeline, running on the real manuals. The language model is not in this build — the banner says so. We built the part we designed ourselves first." |
+| "So where is the quantized model?" | "Objective 1. This demo is Objective 5's routing logic, which is independent of which model fills the answer slot." |
+| "Did it make that answer up?" | Expand the passage. "That is the passage, word for word, and those are its four citation fields." |
+| "Why didn't it answer the tuition question?" | "There is no passage about fee amounts in the three manuals. Answering would mean inventing a number. It names the office instead." |
+| "Why two offices, not one?" | "Some subjects sit across offices. Naming one would be a guess. Naming the candidates is the honest output." |
+| "How fast is it?" | "We are not reporting timings from this build — there is no generation in it, so any number would mislead. Timing is measured in the calibration run described in Chapter III." |
+| "Where did the office list come from?" | "Pages 22 to 27 of the Student Handbook, the divisional listing. It is a closed list; the system cannot name an office that is not on it." |
+| "What if a panelist's question breaks it?" | "Then it lands on a referral or the scope message — which is the designed behaviour, not a failure." |
+
+Last row is the one to internalise. **In this system there is no crash case, only a
+conservative case.** A question the retriever cannot serve produces a referral. That is not
+the demo failing; that is the demo working. Say so, calmly, the first time it happens.
+
+---
+
+## 11. Folder layout
+
+```
+poc_thesis/
+├── IMPLEMENTATION_PLAN.md          this file
+├── SPRINTS.md                      status board and sign-off log
+├── README.md                       how to run, in three lines
+├── web/
+│   ├── index.html                  the only screen
+│   ├── styles.css                  three card types, two themes
+│   ├── app.js                      renders the contract; fixture/live toggle
+│   └── fixtures/turns.json         nine pre-recorded turns (Tier 1)
+├── server/
+│   ├── api.py                      one endpoint: POST /ask
+│   ├── contract.py                 the response object, one place
+│   ├── retrieve.py                 BM25 + dense + RRF
+│   ├── route.py                    Gate 1, Gate 2, path selection
+│   ├── compose.py                  quote-based answer assembly
+│   ├── offices.py                  section → office → division
+│   └── config.py                   thresholds, paths, fixed messages
+├── data/
+│   ├── README.md                   what each file is; why the knowledge base is JSONL
+│   ├── MANIFEST.json               hash, size, line count of every generated file
+│   ├── corpus_demo.jsonl           311 passages, one per line, front matter removed
+│   ├── embeddings.npy              311 × 384 float32, row i = passage i
+│   ├── offices.json                22 departments, 6 divisions, pp. 22-27
+│   ├── office_exemplars.jsonl      22 department function statements, one per line
+│   ├── office_lookup.json          40 section → office rules
+│   ├── scope_exemplars.jsonl       rewritten for our manuals, one per line
+│   ├── office_keywords.json        DRAFT keyword rule per department, for Path B (§7.5)
+│   └── thresholds.json             chosen values + the table behind them
+├── inputs/                         copies of the old material, taken once (read-only)
+│   ├── corpus.json                 364 passages, from ai_context/routing/data
+│   ├── scope_exemplars_old.json    the 20 generic exemplars, kept for the record
+│   ├── office_lookup.json          from ai_context/rag_pipeline/data
+│   └── UC-PnC-Student-Handbook-Manual.pdf   authority for pp. 22-27
+├── shared/
+│   ├── tokenizer.py                the BM25 tokenizer, one copy, index + query (§6.4)
+│   └── office_match.py             DRAFT Path B office suggestion by keyword (§7.5)
+├── tools/
+│   ├── common.py                   paths + embedding settings, one place
+│   ├── build_demo_corpus.py        filter + embed, run once
+│   ├── build_office_exemplars.py   cut the pp. 22-27 names + statements out of the PDF
+│   ├── make_data_report.py         writes docs/DATA_REPORT.md
+│   └── calibrate.py                prints the threshold table (Sprint 4)
+└── docs/
+    ├── DATA_REPORT.md              generated, Sprint 1's review outcome
+    ├── SPRINT1_REVIEW.md           the Sprint 1 review: six checks, defects, decisions
+    ├── RESPONSE_CONTRACT.md        §4, standalone
+    └── DEMO_SCRIPT.md              §9, printable
+```
+
+Nothing in `poc_thesis/` reads from `ai_context/`. Copy the inputs in once. A demo that
+depends on another folder is a demo that breaks on a different machine.
+
+---
+
+## 12. Reuse from the old code
+
+| Old file | Verdict |
+|---|---|
+| `routing/retriever.py` | **reuse structure**, fix the threshold, add the dense half + RRF. **Replace `_tokenize`** (`text.lower().split()`) with `shared/tokenizer.py` |
+| `routing/scope_gate.py` | **reuse nearly as-is** — CPU pinning and pre-embedded exemplars are already right |
+| `routing/router.py` | **reuse the shape**; its gate ordering and `generator_calls` counter are already correct |
+| `routing/rag_pipeline_office.py` | **reuse as-is** — breadcrumb parsing and the two-level rule fallback work |
+| `routing/config.py` | **rewrite** — strip every OpenAI key, prompt, and model name |
+| `routing/generator.py` | **delete** — it calls gpt-4o-mini |
+| `rag_pipeline/data/office_lookup.json` | **reuse**, keep the `confirmed` flags |
+| `routing/data/corpus.json` | **reuse after the front-matter filter** |
+
+**`generator.py` must not survive into this folder.** The previous panel called the
+GPT-4o-mini version "application only, not a contribution." An OpenAI import sitting in the
+PoC — even unused, even commented — is an unnecessary risk in a demo whose whole premise is
+offline operation. Delete the file; do not keep it "for reference."
+
+---
+
+## 13. Open decisions for the group
+
+| # | Decision | Recommendation |
+|---|---|---|
+| 1 | Tier 1 only, or push to Tier 2? | Tier 2, but only after P3 is finished and rehearsed |
+| 2 | Does the demo stream the answer word by word? | No. Quoted text appearing word by word implies generation that is not happening |
+| 3 | Show timings at all? | No numbers in Tier 1. In Tier 2, label them *indicative, not measured* |
+| 4 | Who rewrites the 25 scope exemplars? | One member, from the chapter titles; a second member reviews |
+| 5 | Confirm the 22 department names against a real org chart | Needed anyway for the manuscript — do it now, it serves both |
+| 5b | Who writes the 22 office function statements? | Copy them verbatim from pp. 22–27; do not paraphrase |
+| 6 | Are the three Path B questions the right ones? | They are measured, not guessed (§9). Swapping one in without measuring it will break the demo |
+| 7 | Backend framework | Whatever installs fastest and runs offline; the contract makes it swappable |
+
+---
+
+## 14. The boundary that protects the manuscript
+
+The PoC now has a panel-facing purpose it did not have before — the panel asked for it. That
+does **not** make it a source of results.
+
+**Nothing from this build enters the manuscript as a finding.** No timings, no accuracy, no
+retrieval scores, no corpus counts presented as evaluated outcomes. The evaluation in
+Objective 6 runs on the frozen prototype: quantized model, QLoRA adapter, calibrated
+thresholds, the 80-question set. This demo has none of those.
+
+What the demo legitimately contributes is a **design artifact**: it shows the routing logic
+and the three response contracts are implementable and coherent. That is what the panel asked
+to see, and it is all that should be claimed.

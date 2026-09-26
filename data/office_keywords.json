@@ -1,0 +1,405 @@
+{
+  "status": "DRAFT — not reviewed. Written 2026-09-26 by Claude for the group to check.",
+  "purpose": "Path B names an office when no passage answers the question. Matching questions against the printed function statements failed (DATA_REPORT.md §6c), so this draft tries a keyword rule per department. The department list is closed (pp. 22-27). The keywords are NOT printed anywhere: they are our guesses at the words a student would use, each list tied to the printed function it expands.",
+  "rule": "Tokenize the question and every keyword with shared/tokenizer.py (stemmed). A keyword hits when all its tokens appear in the question consecutively. A department scores the total token length of its hits, so 'air conditioner' outweighs 'fee'. Suggest the top 2-3 departments with a score above 0.",
+  "fallback": {
+    "department": null,
+    "note": "UNDECIDED. What Path B shows when no keyword hits. Options: name no office and point to the general information desk, or default to Student Affairs and Services."
+  },
+  "known_weaknesses": [
+    "Written by the same person who wrote the test questions, so the test in DATA_REPORT.md §6d is not independent. The group should write 10 fresh referral questions WITHOUT looking at this file and test those.",
+    "English only. Filipino or Taglish words (sira, bayad, CR as 'comfort room') are not covered except 'cr'.",
+    "Some words are shared across departments on purpose (e.g. 'lab' for Laboratory Services only; computer laboratories may belong to MIS). Needs the group's local knowledge.",
+    "'admission' is under the Registrar because of the group's 2026-09-26 decision, even though p. 27 prints an Admissions Department.",
+    "Stemming merges words across departments. 'account' (MIS) and 'accounting' (Finance) both stem to 'account', so an early draft suggested Finance for a portal-login question. Fixed by using 'portal account' / 'email account' and dropping 'accounting' (which also names the BS Accountancy program). Check every new keyword for the same trap."
+  ],
+  "departments": [
+    {
+      "department": "office-of-the-university-secretary-board-secretary",
+      "basis": "\"open lines of communication between Board members and University officials\" (p. 23)",
+      "keywords": [
+        "board of regents",
+        "board resolution",
+        "board meeting",
+        "university secretary",
+        "board secretary"
+      ]
+    },
+    {
+      "department": "management-information-systems-department",
+      "basis": "\"keep technological infrastructures accessible and up to date\" (p. 23)",
+      "keywords": [
+        "student portal",
+        "portal",
+        "password",
+        "reset password",
+        "login",
+        "log in",
+        "email",
+        "wifi",
+        "wi-fi",
+        "internet",
+        "network",
+        "website",
+        "system error",
+        "portal account",
+        "email account"
+      ]
+    },
+    {
+      "department": "data-protection-department",
+      "basis": "\"compliance with all applicable data protection laws and policies\" (p. 23)",
+      "keywords": [
+        "data privacy",
+        "privacy",
+        "personal data",
+        "personal information",
+        "data breach",
+        "data protection",
+        "consent form",
+        "cctv footage"
+      ]
+    },
+    {
+      "department": "colleges-and-senior-high-school",
+      "basis": "\"academic programs are continually upgraded\" (p. 24)",
+      "keywords": [
+        "dean",
+        "department chair",
+        "program head",
+        "class schedule",
+        "curriculum",
+        "professor",
+        "instructor",
+        "section",
+        "senior high school",
+        "shs"
+      ]
+    },
+    {
+      "department": "office-of-the-university-registrar",
+      "basis": "\"an efficient system for managing student records\" (p. 24); admission kept here by group decision 2026-09-26",
+      "keywords": [
+        "transcript",
+        "transcript of records",
+        "tor",
+        "diploma",
+        "certificate of enrollment",
+        "certificate of registration",
+        "cor",
+        "grades",
+        "form 137",
+        "school records",
+        "authentication",
+        "certification",
+        "admission",
+        "transferee",
+        "freshman application",
+        "enrollment",
+        "enrolment"
+      ]
+    },
+    {
+      "department": "office-of-the-university-library",
+      "basis": "\"innovative library services with relevant and updated resources\" (p. 24)",
+      "keywords": [
+        "library",
+        "librarian",
+        "borrow book",
+        "book",
+        "e-book",
+        "library card",
+        "overdue",
+        "thesis copy",
+        "journal access",
+        "reading area"
+      ]
+    },
+    {
+      "department": "university-health-department",
+      "basis": "\"quality medical and dental care to the students and personnel\" (p. 25)",
+      "keywords": [
+        "clinic",
+        "nurse",
+        "doctor",
+        "dentist",
+        "dental",
+        "medical",
+        "medicine",
+        "sick",
+        "fever",
+        "first aid",
+        "injury",
+        "medical certificate",
+        "check-up",
+        "health"
+      ]
+    },
+    {
+      "department": "laboratory-services-and-disaster-risk-reduction-management-department",
+      "basis": "\"reduce the vulnerability to and impact of disasters\" and \"laboratory service and assistance\" (p. 25)",
+      "keywords": [
+        "laboratory",
+        "lab",
+        "apron",
+        "lab gown",
+        "laboratory equipment",
+        "chemical",
+        "glassware",
+        "microscope",
+        "experiment",
+        "earthquake",
+        "fire drill",
+        "drill",
+        "evacuation",
+        "disaster",
+        "typhoon",
+        "flood",
+        "fire extinguisher",
+        "emergency"
+      ]
+    },
+    {
+      "department": "property-management-and-general-services-department",
+      "basis": "\"upgrading the physical infrastructure and facilities\", \"procurement and inventory services\", \"safeguard the assets and personnel\" (p. 25)",
+      "keywords": [
+        "air conditioner",
+        "aircon",
+        "electric fan",
+        "chair",
+        "table",
+        "desk",
+        "repair",
+        "leak",
+        "ceiling",
+        "light bulb",
+        "electricity",
+        "power outage",
+        "toilet",
+        "restroom",
+        "comfort room",
+        "cr",
+        "building",
+        "facility",
+        "facilities",
+        "maintenance",
+        "janitor",
+        "cleaning",
+        "parking",
+        "park",
+        "motorcycle",
+        "vehicle",
+        "security guard",
+        "guard",
+        "lost and found",
+        "lost item",
+        "gate",
+        "supplies",
+        "procurement",
+        "inventory"
+      ]
+    },
+    {
+      "department": "human-resource-management-department",
+      "basis": "\"teaching and non-teaching personnel ... grow personally and professionally\" (p. 25)",
+      "keywords": [
+        "job opening",
+        "job vacancy",
+        "vacancy",
+        "hiring",
+        "apply as faculty",
+        "faculty application",
+        "employee",
+        "personnel",
+        "staff",
+        "certificate of employment",
+        "service record"
+      ]
+    },
+    {
+      "department": "entrepreneurship-and-business-development-department",
+      "basis": "\"income and long-term impact development projects\" (p. 25)",
+      "keywords": [
+        "canteen",
+        "cafeteria",
+        "food stall",
+        "stall rental",
+        "concessionaire",
+        "school merchandise",
+        "souvenir",
+        "venue rental",
+        "rent the gym",
+        "rent a venue"
+      ]
+    },
+    {
+      "department": "finance-department",
+      "basis": "\"financial records ... budgets ... accounting and cash handling procedures\" (p. 25)",
+      "keywords": [
+        "payment",
+        "pay",
+        "tuition",
+        "fee",
+        "fees",
+        "receipt",
+        "official receipt",
+        "refund",
+        "cashier",
+        "atm",
+        "cash",
+        "balance",
+        "assessment",
+        "installment",
+        "promissory note"
+      ]
+    },
+    {
+      "department": "quality-management-and-planning-department",
+      "basis": "\"continuous improvement through accreditation and certification\" (p. 26)",
+      "keywords": [
+        "accreditation",
+        "iso",
+        "quality management",
+        "client satisfaction survey",
+        "feedback form",
+        "service feedback"
+      ]
+    },
+    {
+      "department": "community-and-extension-services-department",
+      "basis": "\"extension and services programs that will improve the quality of life of the target clientele\" (p. 26)",
+      "keywords": [
+        "community service",
+        "community extension",
+        "extension program",
+        "outreach",
+        "volunteer"
+      ]
+    },
+    {
+      "department": "research-and-development-department",
+      "basis": "\"research-competent ... apply research results\" (p. 26)",
+      "keywords": [
+        "research",
+        "thesis",
+        "capstone",
+        "research adviser",
+        "research proposal",
+        "ethics review",
+        "research grant",
+        "research title",
+        "plagiarism"
+      ]
+    },
+    {
+      "department": "knowledge-management-and-innovation-department",
+      "basis": "\"applying for patents and intellectual property protection\" (p. 26)",
+      "keywords": [
+        "patent",
+        "intellectual property",
+        "copyright",
+        "trademark",
+        "utility model",
+        "innovation",
+        "start-up",
+        "startup",
+        "incubation",
+        "journal publication",
+        "publication"
+      ]
+    },
+    {
+      "department": "student-affairs-and-services-department",
+      "basis": "\"activities geared at students that will complement their academic studies\" (p. 27)",
+      "keywords": [
+        "student organization",
+        "organization",
+        "club",
+        "student council",
+        "election",
+        "student activity",
+        "activity permit",
+        "event",
+        "uniform",
+        "dress code",
+        "scholarship"
+      ]
+    },
+    {
+      "department": "sports-and-development-department",
+      "basis": "\"student-athletes ... physical activities and sport opportunities\" (p. 27)",
+      "keywords": [
+        "varsity",
+        "sports",
+        "athlete",
+        "tryout",
+        "try out",
+        "intramurals",
+        "gym",
+        "basketball",
+        "volleyball",
+        "training"
+      ]
+    },
+    {
+      "department": "guidance-and-counseling-department",
+      "basis": "\"academic, social, emotional and personal development\" (p. 27)",
+      "keywords": [
+        "guidance",
+        "counselor",
+        "counseling",
+        "counselling",
+        "mental health",
+        "stress",
+        "anxiety",
+        "depression",
+        "good moral",
+        "personality test",
+        "career guidance"
+      ]
+    },
+    {
+      "department": "admissions-department",
+      "basis": "\"recruit and communicate with prospective and admitted students\" (p. 27)",
+      "keywords": [
+        "prospective student",
+        "recruitment",
+        "campus tour",
+        "incoming student",
+        "student inquiry"
+      ]
+    },
+    {
+      "department": "placement-alumni-and-linkage-department",
+      "basis": "\"beneficial alliances with enterprises, industries, educational institutions\" (p. 27)",
+      "keywords": [
+        "internship",
+        "ojt",
+        "on-the-job training",
+        "practicum",
+        "alumni",
+        "job fair",
+        "career fair",
+        "placement",
+        "partner company",
+        "moa",
+        "host training establishment"
+      ]
+    },
+    {
+      "department": "gender-and-development-department",
+      "basis": "\"gender-inclusiveness and gender-sensitive spaces\" (p. 27)",
+      "keywords": [
+        "gender",
+        "harassment",
+        "sexual harassment",
+        "safe space",
+        "lgbt",
+        "lgbtq",
+        "gender-based violence",
+        "vawc",
+        "lactation room"
+      ]
+    }
+  ]
+}
