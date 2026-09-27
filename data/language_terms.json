@@ -1,0 +1,16 @@
+{
+  "status": "DRAFT, pending group review (2026-09-27). Each entry is here because it is NOT in the English word list but is fine in an English question at UC-PnC.",
+  "university_phrases": [
+    "Pamantasan ng Cabuyao",
+    "University of Cabuyao",
+    "Dangal ng Bayan"
+  ],
+  "university_terms": [
+    "pnc", "uc", "cabuyao", "pamantasan", "pinnacle", "opac", "elibrary", "ched", "qdms", "sipp",
+    "gwa", "ojt", "tor", "cor", "enrol", "enrolment", "enrolments", "enrolled",
+    "bscpe", "bsit", "bscs", "bsce", "bsee", "bsece", "bsie", "bsn", "bsa", "bsba", "bsed", "beed", "shs"
+  ],
+  "chat_shorthand": [
+    "hw", "wat", "wut", "pls", "plz", "u", "r", "ur", "asap", "thx", "ty", "b4", "abt", "info", "sched", "req", "reqs", "govt", "ok", "okay"
+  ]
+}

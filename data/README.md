@@ -10,6 +10,13 @@ Records go in JSONL, lookup tables in JSON, vectors in NPY.
 | `scope_exemplars.jsonl` | JSONL | one in-scope example question, with its source (25) | hand-written |
 | `offices.json` | JSON | the closed office list: 6 divisions, 22 departments, aliases | `tools/build_office_exemplars.py` |
 | `office_lookup.json` | JSON | 40 section → office rules, copied unchanged, `confirmed` flags kept | copied from `inputs/` |
+| `english_words.txt` | text | Gate 0: 63,993 English words, one per line (SCOWL via Ubuntu `wamerican`; license in `inputs/american-english.COPYRIGHT.txt`) | `tools/build_language_lists.py` |
+| `language_terms.json` | JSON | Gate 0: university names ("Pamantasan ng Cabuyao"), university terms, chat shorthand. **Draft**, human-reviewed | hand-written |
+| `language_test.jsonl` | JSONL | Gate 0 test set: 62 questions (English, Tagalog, Taglish, Bisaya, Ilocano, Hiligaynon, foreign) | hand-written (Claude draft) |
+| `language_test_heldout.jsonl` | JSONL | *(not yet)* questions written by classmates who haven't seen the rule; the number to report | classmates |
+| `question_split_test.jsonl` | JSONL | Gate 0b test set: 40 messages (single questions containing "and", and two- or three-question messages) | hand-written (Claude draft) |
+| `question_split_test_heldout.jsonl` | JSONL | *(not yet)* messages written by classmates who haven't seen the rule | classmates |
+| `office_keywords.json` | JSON | **Draft** keyword rule per department, for Path B | hand-written |
 | `MANIFEST.json` | JSON | hash, size and line count of every generated file | the tools |
 
 ## Why the knowledge base is JSONL

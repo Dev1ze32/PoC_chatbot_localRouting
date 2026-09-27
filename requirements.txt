@@ -1,6 +1,34 @@
-# Data tools and (later) the server. No OpenAI, no generator model.
-sentence-transformers>=2.7.0
-numpy>=1.24.0
-rank-bm25>=0.2.2
-snowballstemmer>=2.2
-# build_office_exemplars.py also needs the `pdftotext` command (poppler-utils).
+# Routing demo (PoC). Python 3.13. Install into .venv:
+#   .venv/bin/pip install -r requirements.txt          (WSL / Linux)
+#   .venv\Scripts\pip install -r requirements.txt      (Windows, if you make a Windows venv)
+#
+# No fine-tuning, no quantization. The generator is a hosted STAND-IN (gpt-4o-mini)
+# behind server/generator.py, to be replaced by the study's offline model.
+# Versions are pinned to the ones every score in docs/DATA_REPORT.md was measured with.
+# Change one and re-run tools/make_data_report.py before trusting a number.
+#
+# PyTorch is the CPU-only build: the demo embeds on CPU (tools/common.py
+# EMBED_DEVICE = "cpu"). The CUDA build is ~10x larger and buys nothing here.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.13.0
+
+# Embeddings: BAAI/bge-small-en-v1.5
+sentence-transformers==5.6.1
+transformers==5.14.1
+tokenizers==0.22.2
+huggingface_hub==1.26.0
+safetensors==0.8.0
+numpy==2.5.1
+
+# BM25 + the stemming tokenizer (shared/tokenizer.py)
+rank-bm25==0.2.2
+snowballstemmer==3.1.1
+
+# Live demo server and the stand-in generator
+fastapi==0.118.3
+uvicorn==0.37.0
+openai==2.52.0
+python-dotenv==1.2.2
+
+# System tool, not pip: build_office_exemplars.py needs `pdftotext` (poppler-utils).
+#   WSL:  sudo apt install poppler-utils

@@ -1,0 +1,62 @@
+{"group": "English", "question": "How do I borrow a book from the university library?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "What are the requirements for student admission?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "How many hours is the required internship?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "Where do I get my certificate of registration?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "Can I request my transcript of records online?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "What is the passing grade in the college?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "How do I apply for a scholarship?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "Who should I talk to about my grades?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "What happens if I miss the final exam?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "Is there a dental clinic on campus?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "How do I join a student organization?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English", "question": "What is the dress code for students?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English+terms", "question": "How do I submit requirements in Pinnacle?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English+terms", "question": "Where do I get my TOR?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English+terms", "question": "How many hours is the OJT for BSCpE?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English+terms", "question": "What GWA do I need for the President's List?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English+terms", "question": "Is Pamantasan ng Cabuyao accredited?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English typos", "question": "how do i enrol in the univrsity", "expected": "english", "written_by": "claude-draft"}
+{"group": "English typos", "question": "wat r the requirments for admision", "expected": "english", "written_by": "claude-draft"}
+{"group": "English typos", "question": "hw 2 borrow book", "expected": "english", "written_by": "claude-draft"}
+{"group": "English typos", "question": "can i borrow books overnite", "expected": "english", "written_by": "claude-draft"}
+{"group": "English typos", "question": "where is the registrar ofice", "expected": "english", "written_by": "claude-draft"}
+{"group": "English typos", "question": "how to get TOR asap", "expected": "english", "written_by": "claude-draft"}
+{"group": "English short", "question": "TOR?", "expected": "english", "written_by": "claude-draft"}
+{"group": "English short", "question": "scholarship", "expected": "english", "written_by": "claude-draft"}
+{"group": "English short", "question": "library hours", "expected": "english", "written_by": "claude-draft"}
+{"group": "English short", "question": "enrollment", "expected": "english", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Paano manghiram ng libro sa library?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Ilang oras ang kailangan sa OJT?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Paano kumuha ng kopya ng transcript of records ko?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Ano ang mga requirements para makapasok sa unibersidad?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Sira ang aircon sa classroom namin, saan po ako magrereport?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Uulan ba bukas sa Cabuyao?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Kailan ang huling araw ng enrollment?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Tagalog", "question": "Saan makikita ang opisina ng registrar?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Pano mag enroll pag irregular student ako?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Saan pwede mag borrow ng books sa library?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Ilang hours ang required na internship?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Pano mag request ng TOR sa registrar?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Yung aircon sa room namin sira, sino po dapat i-contact?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "How do I request my TOR po?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Pwede ba mag-enroll kahit may balance pa ako?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Taglish", "question": "Can I borrow books kahit wala akong ID?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Bisaya", "question": "Asa ko makahulam ug libro?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Bisaya", "question": "Pila ka oras ang OJT?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Bisaya", "question": "Unsaon pag-enroll sa unibersidad?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Bisaya", "question": "Kanus-a ang katapusan sa enrollment?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Bisaya", "question": "Asa ang opisina sa registrar?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Ilocano", "question": "Kasano ti agbulod iti libro?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Ilocano", "question": "Mano nga oras ti OJT?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Ilocano", "question": "Ania dagiti kasapulan para iti admission?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Ilocano", "question": "Sadino ti opisina ti registrar?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Hiligaynon", "question": "Diin ako makahulam sang libro?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Hiligaynon", "question": "Ano ang kinahanglan para sa admission?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "¿Cómo pido prestado un libro?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "Comment emprunter un livre à la bibliothèque ?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "Bagaimana cara meminjam buku di perpustakaan?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "Wie kann ich ein Buch ausleihen?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "Como posso pedir um livro emprestado?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "도서관에서 책을 어떻게 빌려요?", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "我怎么在图书馆借书？", "expected": "notice", "written_by": "claude-draft"}
+{"group": "Foreign", "question": "図書館で本を借りるにはどうすればいいですか？", "expected": "notice", "written_by": "claude-draft"}

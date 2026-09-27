@@ -160,7 +160,15 @@
       ],
       "tool": "tools/build_demo_corpus.py",
       "what": "Passage vectors for dense retrieval"
+    },
+    "english_words.txt": {
+      "bytes": 593859,
+      "license": "inputs/american-english.COPYRIGHT.txt",
+      "sha256": "ec382b518ab889233bdddc2b341fb0606bb03e7d163ecd0db673a11d06f3d839",
+      "source": "inputs/american-english.txt (SCOWL via Ubuntu wamerican 2020.12.07-2)",
+      "tool": "tools/build_language_lists.py",
+      "what": "Gate 0 English word list (lowercase, letters only)"
     }
   },
-  "updated": "2026-09-26"
+  "updated": "2026-09-27"
 }

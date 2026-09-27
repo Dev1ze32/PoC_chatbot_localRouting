@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC-PnC Student Helpdesk — preview</title>
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<div class="banner" role="note"><strong>PROOF OF CONCEPT</strong> · Retrieval and routing are real. Answers are written by <b>gpt-4o-mini</b>, a cloud LLM standing in for the study's fine-tuned, 4-bit, offline model. Nothing here is a measured result.</div>
+
+<header class="top">
+  <div class="top-in">
+    <div class="mark" aria-hidden="true">PnC</div>
+    <div>
+      <div class="brand-name">UC-PnC Student Helpdesk</div>
+      <div class="brand-sub">Answers from the university's official manuals</div>
+    </div>
+    <div class="spacer"></div>
+    <button type="button" id="devToggle" class="switch" aria-pressed="false"><span class="txt-long">Developer view</span><span class="txt-short">Dev</span><span class="knob" aria-hidden="true"></span><span class="state" aria-hidden="true"></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="panel-note"><b>Developer view is on.</b> Every answer shows how it was made, which of the three paths it took, and the exact passages the model was given. Students see the same page without these panels. <span id="genStatus"></span></div>
+
+  <div class="convo" id="convo" aria-live="polite">
+    <div class="welcome">
+      <div class="who"><span class="dot" aria-hidden="true">PnC</span>Student Helpdesk</div>
+      <div class="card">
+        <h2>Hi! I'm the UC-PnC Student Helpdesk.</h2>
+        <p>I answer from the university's official manuals and show you exactly where each answer comes from. If the manuals don't cover your question, I'll tell you which office handles it.</p>
+        <div class="chips" data-topics></div>
+      </div>
+    </div>
+    <noscript><div class="card err"><p class="lead">This page needs JavaScript.</p></div></noscript>
+  </div>
+</main>
+
+<div class="dock">
+  <div class="dock-in">
+    <div class="demo-strip" id="demoStrip">
+      <div class="hdr">Demo questions by expected path. Click one to ask it.</div>
+    </div>
+    <form class="composer" id="composer" autocomplete="off">
+      <input type="text" id="q" maxlength="500" placeholder="Ask about enrolment, grades, the library…" aria-label="Your question">
+      <button class="send" id="send" type="submit" aria-label="Send">➤</button>
+    </form>
+    <p class="hint">Answers come only from the Student Manual, Internship Manual, and Student Research and Innovation Manual.</p>
+  </div>
+</div>
+
+<dialog class="modal" id="modal" aria-labelledby="modalTitle">
+  <div class="modal-head">
+    <h2 id="modalTitle">What the model was given</h2>
+    <button type="button" class="btn" id="modalClose">Close</button>
+  </div>
+  <div class="modal-body" id="modalBody"></div>
+</dialog>
+
+</body>
+</html>

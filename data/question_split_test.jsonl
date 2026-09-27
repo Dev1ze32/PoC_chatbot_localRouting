@@ -1,0 +1,40 @@
+{"group": "One question, contains 'and'", "question": "What are the requirements and deadlines for admission?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "How do I enroll and pay my fees?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Where and when is enrollment?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "What documents do I need for admission and enrollment?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Can I borrow books and magazines from the library?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Who approves the leave of absence and the dropping of subjects?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Is there a clinic and a dentist on campus?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "What happens if I fail and have to repeat a subject?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Can I enroll online and then pay at the cashier?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "What is the dress code for men and women?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "How do I join a student organization and become an officer?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Where do I submit my thesis and my ethics review form?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Tell me the library hours and the rules for borrowing.", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "How many units can I take and still graduate on time?", "expected": "single"}
+{"group": "One question, contains 'and'", "question": "Please tell me how to request my TOR and COR.", "expected": "single"}
+{"group": "One question, with greeting or statement", "question": "Hi! How do I borrow a book?", "expected": "single"}
+{"group": "One question, with greeting or statement", "question": "Thanks! Also, where is the registrar?", "expected": "single"}
+{"group": "One question, with greeting or statement", "question": "I want to know how to borrow a book.", "expected": "single"}
+{"group": "One question, with greeting or statement", "question": "I lost my ID and I need a new one, what do I do?", "expected": "single"}
+{"group": "One question, with greeting or statement", "question": "If I fail the final exam, can I retake it?", "expected": "single"}
+{"group": "One question, with greeting or statement", "question": "TOR?", "expected": "single"}
+{"group": "Two questions", "question": "How do I borrow a book from the library and how do I request my TOR?", "expected": "multiple"}
+{"group": "Two questions", "question": "How many hours is the required internship? Also, where is the nearest ATM on campus?", "expected": "multiple"}
+{"group": "Two questions", "question": "Write me a poem about my thesis, then tell me how to borrow a library book.", "expected": "multiple"}
+{"group": "Two questions", "question": "What is GWA and how is it computed?", "expected": "multiple"}
+{"group": "Two questions", "question": "Where is the nearest ATM on campus and who repairs the broken chairs in our classroom?", "expected": "multiple"}
+{"group": "Two questions", "question": "How do I apply for a scholarship and what are the requirements?", "expected": "multiple"}
+{"group": "Two questions", "question": "When is the enrollment? Where do I pay?", "expected": "multiple"}
+{"group": "Two questions", "question": "Can I borrow books overnight and how many can I borrow?", "expected": "multiple"}
+{"group": "Two questions", "question": "How do I drop a subject; who signs the form?", "expected": "multiple"}
+{"group": "Two questions", "question": "Where is the clinic and when is it open?", "expected": "multiple"}
+{"group": "Two questions", "question": "What is the passing grade and is there a retake exam?", "expected": "multiple"}
+{"group": "Two questions", "question": "Explain the grading system and tell me how honors are computed.", "expected": "multiple"}
+{"group": "Two questions", "question": "How do I request a TOR and do I need to pay for it?", "expected": "multiple"}
+{"group": "Two questions", "question": "What's the dress code? Can I wear shorts?", "expected": "multiple"}
+{"group": "Three questions", "question": "How do I enroll, how much is the fee, and where do I pay?", "expected": "multiple"}
+{"group": "Three questions", "question": "When is enrollment? How much is tuition? Where is the cashier?", "expected": "multiple"}
+{"group": "No question marks (run-on)", "question": "how do i borrow a book and how do i return it", "expected": "multiple"}
+{"group": "No question marks (run-on)", "question": "where is the library and what time does it open", "expected": "multiple"}
+{"group": "No question marks (run-on)", "question": "how do i borrow a book from the library", "expected": "single"}
