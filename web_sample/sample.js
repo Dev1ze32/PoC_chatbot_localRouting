@@ -84,12 +84,15 @@ const topicChips = () => h("div", { class: "chips" },
   TOPICS.map(t => h("button", { type: "button", class: "chip", onclick: () => ask(t.q) }, t.label)));
 
 // ------------------------------------------------------------------ dev view
+// The switch is hidden for now (index.html, 22 Oct); ?dev=1 still turns the view on.
+const devToggle = $("#devToggle");
 function setDev(on) {
   document.body.classList.toggle("dev", on);
-  $("#devToggle").setAttribute("aria-pressed", String(on));
+  if (!devToggle) return;
+  devToggle.setAttribute("aria-pressed", String(on));
   try { localStorage.setItem("sampleDevView", on ? "1" : "0"); } catch (_) { /* private mode */ }
 }
-$("#devToggle").addEventListener("click", () => setDev(!document.body.classList.contains("dev")));
+if (devToggle) devToggle.addEventListener("click", () => setDev(!document.body.classList.contains("dev")));
 
 // ------------------------------------------------------------------ replies
 const tag = text => h("div", { class: "tag" }, text);
@@ -333,8 +336,11 @@ $("#clearChat").addEventListener("click", reset);
 // Consent comes BEFORE the account form: the notice must be given before any
 // personal information is entered (RA 10173, Sec. 16(b)). Nothing typed here is
 // stored anywhere, not even in the browser; a reload starts at sign-in again.
+// From chat, the profile pop-up leads to the notice, sign-out, or delete → deleted.
 let screen = "signin";
 let readFrom = "signin";
+let readFromProfile = false;
+const profile = $("#profile");
 document.querySelectorAll("[data-notice]").forEach(slot =>
   slot.append($("#noticeTpl").content.cloneNode(true)));
 
@@ -357,16 +363,67 @@ function signIn(id) {
 }
 
 function signOut() {
+  closeProfile();
   reset();
   document.querySelectorAll(".gate input").forEach(el => { el.value = ""; });
   document.querySelectorAll(".gate .err").forEach(el => { el.textContent = ""; });
   go("signin");
 }
 
+// ------------------------------------------------------------------ profile (pop-up)
+// Delete account removes the account, consent record and sign-in records, and
+// withdraws consent (privacy.html, Sec. 9). It asks for the password first.
+function pfView(name) {
+  profile.querySelectorAll(".pf-view").forEach(v => { v.hidden = v.dataset.view !== name; });
+  if (name === "delete") { $("#dlPw").value = ""; $("#dlErr").textContent = ""; $("#dlPw").focus(); }
+}
+
+function openProfile(view = "main") {
+  if (!profile.open) profile.showModal();
+  pfView(view);
+}
+
+function closeProfile() {
+  if (profile.open) profile.close();
+}
+
+// Appearance: light by default; the choice is kept in this browser only (index.html <head>
+// applies it before the first paint, privacy.html follows it too).
+function setTheme(theme, save = true) {
+  if (theme === "dark") document.documentElement.dataset.theme = "dark";
+  else delete document.documentElement.dataset.theme;
+  profile.querySelectorAll("[data-theme-pick]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.themePick === theme)));
+  if (save) try { localStorage.setItem("helpdeskTheme", theme); } catch (_) { /* private mode */ }
+}
+profile.querySelectorAll("[data-theme-pick]").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.themePick)));
+setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light", false);
+
+document.querySelectorAll("[data-profile]").forEach(b => b.addEventListener("click", () => openProfile()));
+profile.querySelectorAll("[data-pf-close]").forEach(b => b.addEventListener("click", closeProfile));
+profile.querySelectorAll("[data-pf-view]").forEach(b => b.addEventListener("click", () => pfView(b.dataset.pfView)));
+profile.addEventListener("click", e => { if (e.target === profile) closeProfile(); });   // backdrop
+$("#pfRead").addEventListener("click", () => {
+  closeProfile();
+  readFrom = "chat";
+  readFromProfile = true;
+  go("read");
+});
+
+$("#deleteForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!$("#dlPw").value) { $("#dlErr").textContent = "Enter your password to confirm."; return; }
+  signOut();
+  go("deleted");
+});
+
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
 document.querySelectorAll("[data-read]").forEach(b => b.addEventListener("click", () => { readFrom = screen; go("read"); }));
 document.querySelectorAll("[data-signout]").forEach(b => b.addEventListener("click", signOut));
-$("#readClose").addEventListener("click", () => go(readFrom));
+$("#readClose").addEventListener("click", () => {
+  go(readFrom);
+  if (readFromProfile) { readFromProfile = false; openProfile(); }
+});
 $("#agreeBox").addEventListener("change", e => { $("#agreeBtn").disabled = !e.target.checked; });
 $("#agreeBtn").addEventListener("click", () => go("register"));
 $("#declineBtn").addEventListener("click", () => go("declined"));
@@ -398,15 +455,21 @@ $("#composer").addEventListener("submit", e => {
 (async () => {
   const P = new URLSearchParams(location.search);
   let dev = false;
-  try { dev = localStorage.getItem("sampleDevView") === "1"; } catch (_) { /* ignore */ }
+  if (devToggle) {   // a remembered "on" would be stuck with the switch hidden
+    try { dev = localStorage.getItem("sampleDevView") === "1"; } catch (_) { /* ignore */ }
+  }
   if (P.has("dev")) dev = P.get("dev") === "1";
   setDev(dev);
-  // ?screen=signin|consent|register|declined|read|chat picks the first screen (for screenshots);
-  // ?q=... implies chat. Chat screenshots show a placeholder account.
-  const start = P.get("screen") || (P.get("q") ? "chat" : "signin");
+  // ?screen=signin|consent|register|declined|read|deleted|chat picks the first screen (for screenshots);
+  // ?q=... or ?profile=main|delete implies chat. Chat screenshots show a placeholder account.
+  const start = P.get("screen") || (P.get("q") || P.get("profile") ? "chat" : "signin");
   if (start === "chat") signIn(P.get("as") || "2021-00000 (sample)");
   else go($(`#scr-${start}`) ? start : "signin");
   for (const id of (P.get("q") || "").split(",").filter(id => byId[id])) {
     await ask(byId[id].question, true);
+  }
+  if (P.get("profile")) {
+    openProfile(P.get("profile") === "delete" ? "delete" : "main");
+    document.activeElement.blur();   // no focus ring in screenshots
   }
 })();

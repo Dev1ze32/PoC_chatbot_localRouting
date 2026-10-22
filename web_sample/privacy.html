@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy Notice and Terms of Use — UC-PnC Student Helpdesk</title>
 <link rel="stylesheet" href="styles.css">
+<script>
+  // Theme before the first paint: ?theme=dark|light (screenshots), else the choice saved from
+  // the profile pop-up. Light by default.
+  try {
+    var theme = new URLSearchParams(location.search).get("theme") || localStorage.getItem("helpdeskTheme");
+    if (theme === "dark") document.documentElement.dataset.theme = "dark";
+  } catch (e) { /* storage blocked: stay light */ }
+</script>
 </head>
 <!--
   FULL privacy notice. The sign-up pop-up (index.html, #noticeTpl) is its summary: keep them in step.
@@ -17,6 +25,8 @@
   19 MiB memory, 2 iterations, 1 degree of parallelism; unique salt per password). A Windows package
   exists for argon2-cffi (PyPI, 30 Sep 2026).
   Version 2 (13 Oct 2026): the notice lists only the protections that are part of the planned design.
+  Version 3 (22 Oct 2026, adviser's request): contact email added, and the "Last updated" date shown.
+  The date also appears in index.html (two .doc-meta lines): keep the three in step.
   The earlier wording is kept in v4-encrypted-notice/.
   [Bracketed] items are for the researchers to fill in.
 -->
@@ -52,7 +62,7 @@
 
   <main class="pp-main">
     <h1>Privacy Notice and Terms of Use</h1>
-    <p class="pp-meta">Draft version 2 · 13 October 2026 · This page describes the planned design of the helpdesk. The sample website itself stores nothing.</p>
+    <p class="pp-meta"><b>Last updated: 22 October 2026</b> · Draft version 3 · This page describes the planned design of the helpdesk. The sample website itself stores nothing.</p>
     <p class="pp-lead">The UC-PnC Student Helpdesk answers questions from the University's official manuals. It is a research prototype built for an undergraduate thesis. This notice explains what information the helpdesk keeps about you, why, how it is protected, and what your rights are under the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
 
     <section id="summary" class="pp-sec">
@@ -65,13 +75,14 @@
         <dt>Who can see it</dt><dd>Only the researchers.</dd>
         <dt>How long</dt><dd>Until the study ends, then it is permanently deleted.</dd>
         <dt>Your rights</dt><dd>See, correct or delete your information, withdraw your consent, or complain to the National Privacy Commission.</dd>
+        <dt>Contact</dt><dd>The researchers, <a class="link" href="mailto:ancisowendell37@gmail.com">ancisowendell37@gmail.com</a>. See section 12 for other contacts.</dd>
       </dl>
     </section>
 
     <section id="who" class="pp-sec">
       <h2><span class="no">1</span>Who is responsible for your information<span class="law">Sec. 16(b)(6)</span></h2>
       <p>The researchers of the undergraduate thesis “Optimizing Local Small Language Models Using 4-Bit Quantization, QLoRA, and RAG for University Helpdesks”, University of Cabuyao (Pamantasan ng Cabuyao). They decide how your information is used and are responsible for protecting it.</p>
-      <p>Contact: <span class="ph">[researchers' names]</span>, <span class="ph">[researchers' email]</span>. You may also contact the University's Data Protection Department (listed in the Student Manual, p. 23).</p>
+      <p>Contact: <span class="ph">[researchers' names]</span>, <a class="link" href="mailto:ancisowendell37@gmail.com">ancisowendell37@gmail.com</a>. You may also contact the University's Data Protection Department (listed in the Student Manual, p. 23).</p>
     </section>
 
     <section id="collect" class="pp-sec">
@@ -211,7 +222,7 @@
 
     <section id="contact" class="pp-sec">
       <h2><span class="no">12</span>Contact</h2>
-      <p>The researchers: <span class="ph">[researchers' names]</span>, <span class="ph">[researchers' email]</span>.<br>
+      <p>The researchers: <span class="ph">[researchers' names]</span>, <a class="link" href="mailto:ancisowendell37@gmail.com">ancisowendell37@gmail.com</a>.<br>
       The University's Data Protection Department (Student Manual, p. 23).<br>
       The National Privacy Commission, for complaints.</p>
     </section>
