@@ -22,11 +22,14 @@
 >   and the three paths, behind `POST /api/ask`. **Provisional** cut-offs (bm25 12.0 / cos 0.62 /
 >   scope 0.59), set to separate the 18 test questions, are labelled provisional on screen.
 >   Sprint 4 still calibrates them.
-> - **System prompt:** word for word from the 2026-09-22 training-sample design (4 rules; source
+> - **System prompt:** v3 (2026-09-27), changed from the 2026-09-22 training-sample design: rule 1
+>   "one to three sentences" became "one-sentence answer + numbered list, max 8 items, under
+>   150 words" because answers were too thin. **TR-001 and its training targets must be updated to
+>   match** (6 rules; source
 >   line `Source: <document> | <office> | <year> | p. <page>` copied from the passage header;
 >   fixed decline sentence). Headers always use `p. <page>`, ranges included, because a header
 >   saying `pp.` gets "corrected" by the model and then fails the citation check.
-> - **Rule 4 is used live:** if the model returns the decline sentence, the question is referred
+> - **The decline rule (now rule 6) is used live:** if the model returns the decline sentence, the question is referred
 >   (Path B, "model declined"). On the 18 questions this happened twice (research title page
 >   format, Form 137): the passages found didn't answer, and the stand-in said so. **This is the
 >   stand-in's behaviour, not evidence about the study's model.**

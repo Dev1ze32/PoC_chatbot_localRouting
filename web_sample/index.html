@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC-PnC Student Helpdesk — sample preview</title>
+<link rel="stylesheet" href="styles.css">
+<script src="samples.js" defer></script>
+<script src="sample.js" defer></script>
+</head>
+<body>
+
+<!-- ============================================================ sign-in gate (sample: nothing is stored) -->
+<div class="gate" id="gate">
+
+  <section class="screen" id="scr-signin" aria-label="Sign in">
+    <!-- Styled after the university banner: seal on a green-tinted campus photo, a slanted edge,
+         the blackletter name and the "Pamantasan ng Cabuyao" plate on a light triangle pattern. -->
+    <div class="hero">
+      <div class="hero-green">
+        <img class="hero-seal" src="assets/seal.png" alt="University of Cabuyao seal">
+        <p class="hero-cap">Student Helpdesk<span>Answers from the university's official manuals</span></p>
+      </div>
+      <div class="hero-light">
+        <span class="pill hero-pill">Sample preview</span>
+        <div class="wordmark" role="img" aria-label="University of Cabuyao">University of Cabuyao</div>
+        <div class="plate">Pamantasan ng Cabuyao</div>
+        <div class="hero-form">
+          <h1>Sign in to the Student Helpdesk</h1>
+          <p class="sub">For UC-PnC students and personnel.</p>
+          <form id="signinForm" novalidate>
+            <div class="field-row">
+              <label class="field">Student number<input id="siNum" autocomplete="username" spellcheck="false"></label>
+              <label class="field">Password<input id="siPw" type="password" autocomplete="current-password"></label>
+            </div>
+            <p class="err" id="siErr" role="alert"></p>
+            <button class="primary" type="submit">Sign in</button>
+          </form>
+          <p class="alt">New here? <button type="button" class="link" data-go="consent">Create an account</button>
+            <span class="dot-sep" aria-hidden="true">·</span>
+            <button type="button" class="link quiet" data-read>Privacy Notice and Terms of Use</button></p>
+          <p class="sample-note">Sample preview: any student number and password will work. Nothing you type is stored.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="scr-consent" aria-label="Privacy notice">
+    <div class="doc">
+      <div class="doc-head">
+        <div class="step-ind">Create an account · Step 1 of 2</div>
+        <h1>Privacy Notice and Terms of Use</h1>
+        <div class="doc-meta">Please read before creating your account. Draft version 2, 13 October 2026 (sample).</div>
+      </div>
+      <div class="doc-body" data-notice></div>
+      <div class="doc-foot">
+        <label class="agree"><input type="checkbox" id="agreeBox"> <span>I have read the Privacy Notice and Terms of Use, and I agree to the collection and use of my information as described above.</span></label>
+        <div class="doc-btns">
+          <button type="button" class="ghost" id="declineBtn">Decline</button>
+          <button type="button" class="primary" id="agreeBtn" disabled>Agree and continue</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="scr-register" aria-label="Create your account">
+    <div class="auth">
+      <div class="step-ind">Create an account · Step 2 of 2</div>
+      <h1>Your account</h1>
+      <p class="sub">We only ask for your student number and a password.</p>
+      <form id="registerForm" novalidate>
+        <label class="field">Student number<input id="rgNum" autocomplete="username" spellcheck="false"></label>
+        <label class="field">Password<input id="rgPw" type="password" autocomplete="new-password"><span class="help">At least 8 characters. It is stored scrambled, so no one can read it.</span></label>
+        <label class="field">Confirm password<input id="rgPw2" type="password" autocomplete="new-password"></label>
+        <p class="err" id="rgErr" role="alert"></p>
+        <button class="primary" type="submit">Create account</button>
+      </form>
+      <p class="alt"><button type="button" class="link" data-go="signin">Back to sign in</button></p>
+      <p class="sample-note">Sample preview: no account is created and nothing is stored.</p>
+    </div>
+  </section>
+
+  <section class="screen" id="scr-declined" aria-label="Not agreed">
+    <div class="auth">
+      <h1>No account was created</h1>
+      <p class="sub">You need to agree to the Privacy Notice and Terms of Use to use the helpdesk. None of your information was collected.</p>
+      <button type="button" class="primary" data-go="signin">Back to sign in</button>
+      <p class="alt">Changed your mind? <button type="button" class="link" data-go="consent">Read the notice again</button></p>
+    </div>
+  </section>
+
+  <section class="screen" id="scr-read" aria-label="Privacy notice">
+    <div class="doc">
+      <div class="doc-head">
+        <h1>Privacy Notice and Terms of Use</h1>
+        <div class="doc-meta">Draft version 2, 13 October 2026 (sample).</div>
+      </div>
+      <div class="doc-body" data-notice></div>
+      <div class="doc-foot"><div class="doc-btns"><button type="button" class="primary" id="readClose">Close</button></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="app">
+
+  <!-- ============================================================ sidebar -->
+  <aside class="side" aria-label="Helpdesk">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">PnC</div>
+      <div>
+        <div class="brand-name">Student Helpdesk</div>
+        <div class="brand-sub">University of Cabuyao</div>
+      </div>
+    </div>
+
+    <button type="button" class="clear-chat" id="clearChat" title="Clears this screen. Questions and answers are never saved.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+      Clear chat
+    </button>
+
+    <nav class="side-sec" aria-label="Topics">
+      <div class="side-h">Topics</div>
+      <div id="sideTopics"></div>
+    </nav>
+
+    <div class="side-sec dev-block" aria-label="Sample questions">
+      <div class="side-h">Sample questions · by path</div>
+      <div id="sideSamples"></div>
+    </div>
+
+    <!-- Hidden 30 Sep: permission to use the manuals is still being requested, so the
+         sidebar no longer names them. Restore this block once permission is confirmed.
+    <div class="side-sec">
+      <div class="side-h">Answers come only from</div>
+      <ul class="manuals">
+        <li>Student Manual</li>
+        <li>Internship Manual</li>
+        <li>Student Research and Innovation Manual</li>
+      </ul>
+    </div>
+    -->
+
+    <div class="acct">
+      <div class="acct-k">Signed in as</div>
+      <div class="acct-id" data-acct>—</div>
+      <div class="acct-links"><button type="button" class="link quiet" data-read>Privacy notice</button><button type="button" class="link quiet" data-signout>Sign out</button></div>
+      <p class="acct-note">Your questions are not saved.</p>
+    </div>
+  </aside>
+
+  <!-- ============================================================ main -->
+  <div class="main">
+    <header class="bar">
+      <div class="bar-brand" aria-hidden="true"><span class="seal sm">PnC</span>Student Helpdesk</div>
+      <span class="pill" title="Answers are prepared from the manuals in the format the fine-tuned model is trained to use. No search or model is running, and nothing here is a result.">Sample preview</span>
+      <div class="spacer"></div>
+      <button type="button" class="link quiet bar-out" data-signout>Sign out</button>
+      <button type="button" id="devToggle" class="switch" aria-pressed="false"><span class="txt-long">Developer view</span><span class="txt-short">Dev</span><span class="knob" aria-hidden="true"></span></button>
+    </header>
+
+    <div class="panel-note"><b>Developer view is on.</b> Each answer shows the path it takes through the system and why. Students see the same page without these panels.</div>
+
+    <main class="thread" id="convo" aria-live="polite">
+      <section class="hello" id="hello">
+        <h1>What do you need to know?</h1>
+        <p>Ask about university policies and services. I answer from the official manuals and show where each answer comes from. If the manuals don't cover it, I'll tell you which office does.</p>
+        <div class="suggest" id="suggest"></div>
+      </section>
+      <noscript><p>This page needs JavaScript.</p></noscript>
+    </main>
+
+    <div class="dock">
+      <div class="dock-in">
+        <div class="demo-strip" id="demoStrip"><div class="hdr">Sample questions, by the path they take.</div></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <input type="text" id="q" maxlength="500" placeholder="Ask about enrolment, grades, the library…" aria-label="Your question">
+          <button class="send" id="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </form>
+        <p class="hint">Every answer names the manual, page and office it comes from. Your questions are not saved.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ the notice: SHORT version (pop-up)
+     A summary of privacy.html, which is the full notice (Data Privacy Act of 2012, RA 10173,
+     Sec. 16(b)(1)-(8): what a person must be told before their information is collected).
+     Keep the two in step: every line here must match a section there. -->
+<template id="noticeTpl">
+  <article class="notice short">
+    <p class="intro">A short summary. <a class="link" href="privacy.html" target="_blank" rel="noopener">Read the full Privacy Notice</a> <span class="nt">(opens in a new tab)</span> for each point in detail, including exactly how your information is protected.</p>
+    <dl class="sum">
+      <dt>What we keep</dt><dd>Your student number, your password (scrambled, so no one can read it), when you agreed to this notice, and when you sign in.</dd>
+      <dt>What we don't keep</dt><dd>Your questions, the answers, your name, contact details or location.</dd>
+      <dt>Why</dt><dd>So only UC-PnC students and personnel can use the helpdesk, and misuse can be traced. We use it only with your consent, and never in the study's results.</dd>
+      <dt>Where and how</dt><dd>On the helpdesk computer only, in a local database that only the researchers can open. Nothing is sent over the internet.</dd>
+      <dt>Who can see it</dt><dd>Only the researchers.</dd>
+      <dt>How long</dt><dd>Until the study ends, then it is permanently deleted.</dd>
+      <dt>Your rights</dt><dd>See, correct or delete your information, withdraw your consent, or complain to the National Privacy Commission.</dd>
+    </dl>
+    <h2 class="terms-h">Terms of use</h2>
+    <ul class="terms">
+      <li>For UC-PnC students and personnel only. Don't share your account.</li>
+      <li>Don't copy the manuals' content outside the University.</li>
+      <li>Don't type personal information into your questions.</li>
+      <li>Answers come from an AI reading the manuals and may contain mistakes. Check important matters with the office named.</li>
+    </ul>
+    <p class="more"><a class="link" href="privacy.html" target="_blank" rel="noopener">Read the full Privacy Notice and Terms of Use</a> <span>(opens in a new tab)</span></p>
+    <p class="basis">Based on the Data Privacy Act of 2012 (Republic Act No. 10173). Contact: the researchers, <span class="ph">[researchers' email]</span>, or the University's Data Protection Department.</p>
+  </article>
+</template>
+</body>
+</html>

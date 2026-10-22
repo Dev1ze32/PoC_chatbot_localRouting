@@ -24,7 +24,8 @@ def health():
             "passages": len(router.retriever.passages),
             "generator": {"available": router.generator is not None,
                           "backend": getattr(router.generator, "backend", None),
-                          "model": config.OPENAI_MODEL if router.generator else None,
+                          "model": getattr(router.generator, "model", None),
+                          "disclaimer": config.DISCLAIMER,
                           "problem": router.generator_problem},
             "thresholds": router._thresholds()}
 

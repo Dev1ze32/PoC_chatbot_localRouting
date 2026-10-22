@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Notice and Terms of Use — UC-PnC Student Helpdesk</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<!--
+  FULL privacy notice. The sign-up pop-up (index.html, #noticeTpl) is its summary: keep them in step.
+  Structure follows the Data Privacy Act of 2012 (RA 10173), checked against the Act's text on 30 Sep 2026:
+    Sec. 16(b)(1)-(8) what a person must be told before collection · Sec. 12(a) consent ·
+    Sec. 11(d)-(e) not excessive, kept only as long as needed · Sec. 20(a)-(c) organizational, physical,
+    technical measures · Sec. 20(e) confidentiality · Sec. 20(f) breach notification ·
+    Sec. 16(c)-(f) and Sec. 18 rights.
+  Technical measures (checked 30 Sep 2026): OWASP Password Storage Cheat Sheet (Argon2id minimum
+  19 MiB memory, 2 iterations, 1 degree of parallelism; unique salt per password); SQLCipher design page
+  (256-bit AES; key from a passphrase with PBKDF2-HMAC-SHA512). Windows packages exist for
+  sqlcipher3-wheels, argon2-cffi and keyring (PyPI, 30 Sep 2026).
+  [Bracketed] items are for the researchers to fill in.
+-->
+<body class="pp">
+
+<header class="pp-bar">
+  <a class="pp-brand" href="index.html">
+    <img src="assets/seal.png" alt="University of Cabuyao seal">
+    <span><b>Student Helpdesk</b><small>University of Cabuyao</small></span>
+  </a>
+  <span class="pill">Sample preview</span>
+  <div class="spacer"></div>
+  <a class="link quiet" href="index.html">Back to the helpdesk</a>
+</header>
+
+<div class="pp-wrap">
+  <nav class="pp-toc" aria-label="On this page">
+    <div class="side-h">On this page</div>
+    <a href="#summary">Summary</a>
+    <a href="#who">1. Who is responsible</a>
+    <a href="#collect">2. What we collect</a>
+    <a href="#why">3. Why we collect it</a>
+    <a href="#flow">4. How your information is handled</a>
+    <a href="#see">5. Who can see it</a>
+    <a href="#protect">6. How we protect it</a>
+    <a href="#keep">7. How long we keep it</a>
+    <a href="#breach">8. If something goes wrong</a>
+    <a href="#rights">9. Your rights</a>
+    <a href="#changes">10. Changes to this notice</a>
+    <a href="#terms">11. Terms of use</a>
+    <a href="#contact">12. Contact</a>
+  </nav>
+
+  <main class="pp-main">
+    <h1>Privacy Notice and Terms of Use</h1>
+    <p class="pp-meta">Draft version 1 · 30 September 2026 · This page describes the planned design of the helpdesk. The sample website itself stores nothing.</p>
+    <p class="pp-lead">The UC-PnC Student Helpdesk answers questions from the University's official manuals. It is a research prototype built for an undergraduate thesis. This notice explains what information the helpdesk keeps about you, why, how it is protected, and what your rights are under the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+
+    <section id="summary" class="pp-sec">
+      <h2>Summary</h2>
+      <dl class="sum">
+        <dt>What we keep</dt><dd>Your student number, your password (scrambled, so no one can read it), when you agreed to this notice, and when you sign in.</dd>
+        <dt>What we don't keep</dt><dd>Your questions, the answers, your name, contact details or location.</dd>
+        <dt>Why</dt><dd>So only UC-PnC students and personnel can use the helpdesk, and misuse can be traced. We use it only with your consent, and never in the study's results.</dd>
+        <dt>Where and how</dt><dd>On the helpdesk computer only, in an encrypted database. Nothing is sent over the internet.</dd>
+        <dt>Who can see it</dt><dd>Only the researchers.</dd>
+        <dt>How long</dt><dd>Until the study ends, then it is permanently deleted.</dd>
+        <dt>Your rights</dt><dd>See, correct or delete your information, withdraw your consent, or complain to the National Privacy Commission.</dd>
+      </dl>
+    </section>
+
+    <section id="who" class="pp-sec">
+      <h2><span class="no">1</span>Who is responsible for your information<span class="law">Sec. 16(b)(6)</span></h2>
+      <p>The researchers of the undergraduate thesis “Optimizing Local Small Language Models Using 4-Bit Quantization, QLoRA, and RAG for University Helpdesks”, University of Cabuyao (Pamantasan ng Cabuyao). They decide how your information is used and are responsible for protecting it.</p>
+      <p>Contact: <span class="ph">[researchers' names]</span>, <span class="ph">[researchers' email]</span>. You may also contact the University's Data Protection Department (listed in the Student Manual, p. 23).</p>
+    </section>
+
+    <section id="collect" class="pp-sec">
+      <h2><span class="no">2</span>What we collect<span class="law">Sec. 16(b)(1), Sec. 11(d)</span></h2>
+      <p>Only what is needed to control who uses the helpdesk:</p>
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>Information</th><th>What it looks like</th><th>Why we need it</th></tr></thead>
+          <tbody>
+            <tr><td>Student number</td><td>2021-00000</td><td>Your username. It shows who signed in.</td></tr>
+            <tr><td>Password</td><td>Never stored as you type it. Only a scrambled version (a hash) is kept.</td><td>To check that it is really you.</td></tr>
+            <tr><td>Consent record</td><td>The date and time you agreed, and the notice version.</td><td>Proof that you agreed to this notice.</td></tr>
+            <tr><td>Sign-in record</td><td>The date and time of each successful sign-in.</td><td>To trace misuse of the helpdesk.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>We do not collect</b> your name, email, phone number, photo, location or device details. We do not save your questions or the helpdesk's answers.</p>
+    </section>
+
+    <section id="why" class="pp-sec">
+      <h2><span class="no">3</span>Why we collect it<span class="law">Sec. 16(b)(2), Sec. 12(a)</span></h2>
+      <ul>
+        <li>To let only registered UC-PnC students and personnel use the helpdesk, because the manuals are meant for the university community.</li>
+        <li>To keep a record of who used the helpdesk and when, so that misuse can be traced.</li>
+        <li>To keep proof that you gave your consent.</li>
+      </ul>
+      <p><b>Legal basis:</b> your consent. You give it by ticking the box and choosing “Agree and continue” before your account is made.</p>
+      <p>Your information is <b>not</b> used to grade you, is not sold or shared, and is not part of the study's results: the helpdesk is tested with a fixed set of questions written by the researchers. Because your questions are not saved, they are never used to train the AI model.</p>
+    </section>
+
+    <section id="flow" class="pp-sec">
+      <h2><span class="no">4</span>How your information is handled<span class="law">Sec. 16(b)(3), (5)</span></h2>
+      <ol class="pp-steps">
+        <li><b>Creating an account.</b> You read this notice and agree; the helpdesk saves the consent record. You choose a password; only its hash is saved.</li>
+        <li><b>Signing in.</b> The password you type is checked against the hash and then discarded. A session starts and the sign-in time is saved.</li>
+        <li><b>Asking a question.</b> Your question goes from the browser to the helpdesk program on the same computer. The AI model, which also runs on that computer, writes the answer from the manuals. The question is kept in memory only until the answer is made, and is not written to any file or log.</li>
+        <li><b>Signing out.</b> The session ends. It also ends by itself after a period of no activity (see section 6).</li>
+      </ol>
+      <p>No other system or program can access your information automatically.</p>
+    </section>
+
+    <section id="see" class="pp-sec">
+      <h2><span class="no">5</span>Who can see it<span class="law">Sec. 16(b)(4)</span></h2>
+      <p>Only the researchers, as the helpdesk's administrators. Your information is not shared with anyone else, inside or outside the University, unless the law requires it (for example, a court order).</p>
+    </section>
+
+    <section id="protect" class="pp-sec">
+      <h2><span class="no">6</span>How we protect it<span class="law">Sec. 20(a)–(c), (e)</span></h2>
+      <p>The law asks for organizational, physical and technical measures. These are ours.</p>
+
+      <h3>Technical</h3>
+      <div class="pp-cards">
+        <div class="pp-card">
+          <h4>Passwords are hashed, never stored</h4>
+          <p>Each password is turned into a hash with <b>Argon2id</b>, using its own random salt, at or above the minimum settings of the OWASP Password Storage Cheat Sheet (19 MiB of memory, 2 iterations, 1 degree of parallelism). A hash cannot be turned back into the password. The password itself is never saved or written to a log.</p>
+        </div>
+        <div class="pp-card">
+          <h4>The database is encrypted</h4>
+          <p>Accounts, consent records and sign-in records are kept in a database encrypted with <b>256-bit AES</b> (SQLCipher). The key is made from a passphrase with PBKDF2-HMAC-SHA512. Without the key, the database file cannot be read, even if it is copied.</p>
+        </div>
+        <div class="pp-card">
+          <h4>The key is kept apart from the data</h4>
+          <p>The encryption key is stored in the operating system's protected credential store (for example, Windows Credential Manager), not in the helpdesk's files or code.</p>
+        </div>
+        <div class="pp-card">
+          <h4>Nothing leaves the computer</h4>
+          <p>The helpdesk works offline. It accepts connections only from the computer it runs on (127.0.0.1), and the AI model runs on that same computer. Nothing is sent to the internet or to any outside company.</p>
+        </div>
+        <div class="pp-card">
+          <h4>Sessions end on their own</h4>
+          <p>Each sign-in gets a random session code from a cryptographically secure generator, kept in a cookie that web page scripts cannot read (HttpOnly, SameSite=Strict). You are signed out when you choose Sign out, and automatically after 15 minutes without activity, so the next person at the computer cannot use your account.</p>
+        </div>
+        <div class="pp-card">
+          <h4>Password guessing is slowed down</h4>
+          <p>After 5 wrong passwords in a row, sign-in to that account pauses for 15 minutes. Failed attempts are counted in memory only and are not recorded.</p>
+        </div>
+        <div class="pp-card">
+          <h4>Questions are not kept</h4>
+          <p>Your question stays in memory only while its answer is made. The helpdesk's logs record no question text.</p>
+        </div>
+      </div>
+
+      <h3>Organizational</h3>
+      <ul>
+        <li>Only the researchers have administrator access, each with their own administrator account.</li>
+        <li>The researchers keep your information confidential, during and after the study (Sec. 20(e)).</li>
+        <li>The sign-in record is opened only to look into possible misuse.</li>
+      </ul>
+
+      <h3>Physical</h3>
+      <ul>
+        <li>The database stays on the helpdesk computer. No backups are made, and it is never copied to USB drives, other computers or cloud storage.</li>
+        <li>The helpdesk computer is kept at <span class="ph">[location]</span> and is locked when not in use.</li>
+      </ul>
+    </section>
+
+    <section id="keep" class="pp-sec">
+      <h2><span class="no">7</span>How long we keep it<span class="law">Sec. 16(b)(7), Sec. 11(e)</span></h2>
+      <p>Until the study ends, <span class="ph">[date]</span>. Then the database is deleted and its encryption key is destroyed, so any copy left behind cannot be read. If you ask us to delete your account earlier, we delete your information at that time.</p>
+    </section>
+
+    <section id="breach" class="pp-sec">
+      <h2><span class="no">8</span>If something goes wrong<span class="law">Sec. 20(f)</span></h2>
+      <p>If we believe your information was accessed without permission, we will stop the problem, tell you what happened, which information was involved and what we did about it, and notify the National Privacy Commission when the law requires it.</p>
+    </section>
+
+    <section id="rights" class="pp-sec">
+      <h2><span class="no">9</span>Your rights<span class="law">Sec. 16, Sec. 18</span></h2>
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead><tr><th>You can</th><th>What it means here</th><th>Law</th></tr></thead>
+          <tbody>
+            <tr><td>Be informed</td><td>Know what is collected and why, before you agree (this notice).</td><td>Sec. 16(a), (b)</td></tr>
+            <tr><td>Access</td><td>Ask what we hold about you and how it was used.</td><td>Sec. 16(c)</td></tr>
+            <tr><td>Correct</td><td>Have wrong information fixed.</td><td>Sec. 16(d)</td></tr>
+            <tr><td>Withdraw or delete</td><td>Withdraw your consent, or have your information blocked or deleted. Your account is then removed.</td><td>Sec. 16(e)</td></tr>
+            <tr><td>Get a copy</td><td>Receive your information in a common electronic format.</td><td>Sec. 18</td></tr>
+            <tr><td>Be compensated</td><td>Claim damages caused by misuse of your information.</td><td>Sec. 16(f)</td></tr>
+            <tr><td>Complain</td><td>File a complaint with the National Privacy Commission.</td><td>Sec. 16(b)(8)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>To use any of these rights, contact the researchers or the Data Protection Department (section 12).</p>
+    </section>
+
+    <section id="changes" class="pp-sec">
+      <h2><span class="no">10</span>Changes to this notice<span class="law">Sec. 16(b)</span></h2>
+      <p>We will not change this notice without telling you first. If it changes, you will be asked to agree again the next time you sign in.</p>
+    </section>
+
+    <section id="terms" class="pp-sec">
+      <h2><span class="no">11</span>Terms of use</h2>
+      <ol>
+        <li>The helpdesk is for UC-PnC students and personnel only. Use one account, and do not share your password or let others use your account.</li>
+        <li>The manuals are for the university community. Do not copy or share their content outside the University.</li>
+        <li>Do not type personal information, yours or anyone else's, into your questions.</li>
+        <li>Answers are written by an AI model from the manuals and show their sources. They may contain mistakes. For important matters, such as grades, fees and deadlines, confirm with the office named in the answer.</li>
+        <li>Accounts that break these terms may be removed.</li>
+      </ol>
+    </section>
+
+    <section id="contact" class="pp-sec">
+      <h2><span class="no">12</span>Contact</h2>
+      <p>The researchers: <span class="ph">[researchers' names]</span>, <span class="ph">[researchers' email]</span>.<br>
+      The University's Data Protection Department (Student Manual, p. 23).<br>
+      The National Privacy Commission, for complaints.</p>
+    </section>
+
+    <p class="pp-foot">Based on the Data Privacy Act of 2012 (Republic Act No. 10173), Sections 11, 12, 16, 18 and 20. Password storage follows the OWASP Password Storage Cheat Sheet; database encryption uses SQLCipher.</p>
+  </main>
+</div>
+</body>
+</html>

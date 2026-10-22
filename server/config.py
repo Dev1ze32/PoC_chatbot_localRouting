@@ -51,13 +51,19 @@ THRESHOLD_STATUS = "provisional: set from 18 test questions; calibrated in Sprin
 
 # ---------------------------------------------------------------- generator
 # STAND-IN. The study's generator is a fine-tuned, 4-bit Llama 3.2 3B running
-# offline. This build uses a hosted LLM to show what answer generation looks
-# like. Swap GENERATOR_BACKEND (server/generator.py) to change it.
-GENERATOR_BACKEND = os.environ.get("POC_GENERATOR", "openai")
+# offline. Pick the stand-in with POC_GENERATOR in .env (server/generator.py):
+#   "llama"   the study's BASE model, 4-bit (Q4_K_M GGUF, not fine-tuned), served
+#             by llama.cpp in Google Colab behind a tunnel (colab/llama_server.ipynb)
+#   "openai"  gpt-4o-mini, kept as a backup
+GENERATOR_BACKEND = os.environ.get("POC_GENERATOR", "openai").strip().lower()
 OPENAI_MODEL = os.environ.get("POC_OPENAI_MODEL", "gpt-4o-mini")
+LLAMA_BASE_URL = os.environ.get("LLAMA_BASE_URL", "").strip().rstrip("/")
+LLAMA_MODEL = "Llama-3.2-3B-Instruct-Q4_K_M"   # the --alias set in the Colab notebook
+LLAMA_NOTE = "base model, not fine-tuned"
 GENERATOR_TEMPERATURE = 0.0
 GENERATOR_MAX_TOKENS = 400
 GENERATOR_TIMEOUT_S = 30
+LLAMA_TIMEOUT_S = 90         # a free Colab GPU can be slow on the first call
 
 # ---------------------------------------------------------------- display
 # Document titles as the manuscript's Table 9 writes them.
@@ -70,15 +76,20 @@ SCOPE_MESSAGE = ("I can only help with questions about UC-PnC student policies a
                  "Student Research and Innovation Manual.")
 REFERRAL_NO_PASSAGE = "I couldn't find this in the university manuals."
 REFERRAL_DECLINED = "The manual passages I found don't answer this."
+REFERRAL_UNVERIFIED = ("I found related passages, but I couldn't confirm an answer "
+                       "with a correct source from them.")
 REFERRAL_LEAD = "Based on the subject, this is usually handled by:"
 REFERRAL_NO_OFFICE = ("I couldn't match it to a specific office on the handbook's list "
                       "either.")
-DISCLAIMER = ("Proof of concept. Answers are written by gpt-4o-mini, a cloud LLM standing "
-              "in for the study's fine-tuned, 4-bit, offline model. Nothing here is a "
-              "measured result.")
+_STANDIN = {"openai": f"{OPENAI_MODEL}, a cloud LLM",
+            "llama": f"{LLAMA_MODEL} ({LLAMA_NOTE}), running online in Google Colab,"}
+DISCLAIMER = (f"Proof of concept. Answers are written by "
+              f"{_STANDIN.get(GENERATOR_BACKEND, GENERATOR_BACKEND)} standing in for the "
+              "study's fine-tuned, 4-bit, offline model. Nothing here is a measured result.")
 
 MAX_QUESTION_CHARS = 500
 
 # Only whether a key exists is recorded; the key itself is never read into
 # anything that is logged, returned or displayed.
 OPENAI_API_KEY_PRESENT = bool(os.environ.get("OPENAI_API_KEY"))
+LLAMA_API_KEY_PRESENT = bool(os.environ.get("LLAMA_API_KEY"))

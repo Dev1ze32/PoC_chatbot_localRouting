@@ -5,8 +5,11 @@
         0b more than 1 question -> Path C (one-at-a-time notice + each question as a button)
     Gate 1: bm25_top >= T_b  OR  cosine_top >= T_c
         pass -> generator writes an answer from the fused top passages
-                   answered            -> Path A (cited answer)
-                   declined (rule 4)   -> Path B (referral), model found them insufficient
+                   answered, sources match  -> Path A (cited answer)
+                   opens with the decline sentence (rule 1)
+                                       -> Path B (referral), model found them insufficient;
+                                          anything after the sentence is dropped   [guardrail 1]
+                   citation check fails -> Path B (referral); the answer is withheld  [guardrail 2]
         fail -> Gate 2: closeness to the scope exemplars >= T_s
                    in scope            -> Path B (referral), no passage
                    out of scope        -> Path C (fixed message), no model call
@@ -44,6 +47,12 @@ class Router:
         language.check("warm up", config.LANGUAGE_CUTOFF)      # load the word lists now, not on the first question
 
     # ------------------------------------------------------------------ helpers
+    def _refer(self, resp, question, source, lead):
+        """Path B after the model was called: declined, or its sources failed."""
+        offices = self.offices.suggest(question)
+        resp.update(path="B", answer_source=source, lead=lead, offices=offices,
+                    answer=config.REFERRAL_LEAD if offices else config.REFERRAL_NO_OFFICE)
+
     def _passage_view(self, row):
         p = self.retriever.passages[row]
         office, division = self.offices.display(p["issuing_office"])
@@ -121,26 +130,31 @@ class Router:
                     resp.update(path="A", answer_source="error",
                                 error=f"The generator call failed: {type(e).__name__}: {e}")
                     trace["generator"].update(calls=1, backend=self.generator.backend,
-                                              model=config.OPENAI_MODEL)
+                                              model=self.generator.model)
                 else:
                     timings["generate"] = g.latency_ms
                     resp["model_io"]["output"] = g.text
                     trace["generator"].update(calls=1, model=g.model, backend=g.backend,
                                               prompt_tokens=g.prompt_tokens,
                                               completion_tokens=g.completion_tokens)
-                    if g.text.strip() == DECLINE_SENTENCE:
+                    # Guardrail 1: an output that OPENS with the decline sentence is a
+                    # refusal, whatever follows (the base model often keeps writing).
+                    text = g.text.strip()
+                    declined = text.startswith(DECLINE_SENTENCE)
+                    if declined:
                         trace["generator"]["declined"] = True
-                        resp.update(path="B", answer_source="model_declined",
-                                    lead=config.REFERRAL_DECLINED,
-                                    answer=config.REFERRAL_LEAD,
-                                    offices=self.offices.suggest(question))
-                        if not resp["offices"]:
-                            resp["answer"] = config.REFERRAL_NO_OFFICE
+                        trace["generator"]["extra_text_dropped"] = text != DECLINE_SENTENCE
+                        self._refer(resp, question, "model_declined", config.REFERRAL_DECLINED)
                     else:
-                        body, cited, status, detail = check_citations(g.text, given)
+                        body, cited, status, detail = check_citations(text, given)
                         trace["citation_check"] = {"status": status, "detail": detail}
-                        resp.update(path="A", answer=body, answer_source="generated",
-                                    citations=cited)
+                        if status == "passed":
+                            resp.update(path="A", answer=body, answer_source="generated",
+                                        citations=cited)
+                        else:
+                            # Guardrail 2: an answer whose sources can't be matched is
+                            # never shown; the student is referred instead.
+                            self._refer(resp, question, "citation_failed", config.REFERRAL_UNVERIFIED)
         else:
             t0 = time.perf_counter()
             qv = self.retriever.embed(question, instruction=False)   # question vs question

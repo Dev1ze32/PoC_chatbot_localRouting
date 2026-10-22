@@ -7,7 +7,11 @@ full verifier, not in this build.
 """
 import re
 
-_SOURCE = re.compile(r"^\s*Source:\s*(.+?)\s*$", re.MULTILINE)
+# Same line only ([ \t], not \s): with \s, a bare "Source:" line swallowed the
+# NEXT line as its source and left any further lines unchecked. A bare
+# "Source:" heading followed by lines without the prefix now fails the check,
+# as rule 5 asks for "Source: ..." on every source line.
+_SOURCE = re.compile(r"^[ \t]*Source:[ \t]*(.+?)[ \t]*$", re.MULTILINE)
 
 
 def _norm(s):

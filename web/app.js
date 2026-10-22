@@ -56,8 +56,22 @@ function h(tag, attrs = {}, ...children) {
 }
 const fmt = (x, d) => (typeof x === "number" ? x.toFixed(d) : "—");
 
+// Plain lines become paragraphs; runs of "1. …" lines become one numbered list
+// (prompt rule 3). The list keeps the model's own numbering via `start`.
 function paragraphs(text) {
-  return String(text).split(/\n{2,}|\n/).map(s => s.trim()).filter(Boolean).map(s => h("p", {}, s));
+  const out = [];
+  let list = null;
+  for (const line of String(text).split("\n").map(s => s.trim()).filter(Boolean)) {
+    const m = line.match(/^(\d+)[.)]\s+(.*)$/);
+    if (m) {
+      if (!list) out.push(list = h("ol", { start: m[1] }));
+      list.append(h("li", {}, m[2]));
+    } else {
+      list = null;
+      out.push(h("p", {}, line));
+    }
+  }
+  return out;
 }
 
 function topicChips() {
@@ -173,19 +187,15 @@ function cardA(resp) {
           h("summary", {}, "Read the passage"),
           h("div", { class: "passage" }, c.text))))));
   }
-  if (resp.trace.citation_check.status !== "passed") {
-    card.append(h("p", { class: "note-warn" },
-      "The sources in this answer could not be matched to the manual passages. Please check with the office before relying on it."));
-  }
   const btnA = passagesButton(resp);
   if (btnA) card.append(btnA);
   return card;
 }
 
 function cardB(resp) {
-  const declined = resp.answer_source === "model_declined";
+  const why = { model_declined: " · MODEL DECLINED", citation_failed: " · CITATION CHECK FAILED" }[resp.answer_source] || "";
   const card = h("article", { class: "card b", "aria-label": "Office referral" },
-    tag(declined ? "PATH B · REFERRAL · MODEL DECLINED · 0 CITATIONS" : "PATH B · REFERRAL · 0 CITATIONS"),
+    tag(`PATH B · REFERRAL${why} · 0 CITATIONS`),
     h("p", { class: "lead" }, resp.lead),
     h("p", { style: "margin:0 0 10px" }, resp.answer));
   if (resp.offices.length) {
@@ -198,7 +208,7 @@ function cardB(resp) {
   }
   card.append(h("p", { class: "fine" },
     "Offices come from the list printed in the Student Manual, pp. 22–27. This helpdesk can only name an office on that list."));
-  const btnB = passagesButton(resp);   // only when the model was called and declined
+  const btnB = passagesButton(resp);   // only when the model was called (declined, or its sources failed)
   if (btnB) card.append(btnB);
   return card;
 }
@@ -322,10 +332,13 @@ function trace(resp) {
         h("span", { class: "now" }, `This build: ${gen.model || "the stand-in model"} writes it from the passages (1 call).`),
         h("span", { class: "full" }, "Full system: the study's fine-tuned 4-bit model, offline.")),
       kv(rows),
-      gen.declined ? h("div", { class: "d", style: "margin-top:4px" }, "The model replied with the decline sentence (rule 4): the passages do not answer this, so the question is referred.") : null]));
-    if (resp.path === "A" && !resp.error) {
-      const cc = t.citation_check;
+      gen.declined ? h("div", { class: "d", style: "margin-top:4px" },
+        "Guardrail 1: the model opened with the decline sentence (rule 1), so the passages do not answer this and the question is referred.",
+        gen.extra_text_dropped ? " It kept writing after the sentence; that text was dropped." : "") : null]));
+    const cc = t.citation_check;
+    if (cc && cc.status !== "not run") {
       steps.push(step(n++, "Citation check", [verdict(cc.status === "passed"), ` — ${cc.detail}.`,
+        cc.status !== "passed" ? h("div", { class: "d", style: "margin-top:4px" }, "Guardrail 2: the answer is withheld, not shown with a warning. The student gets a referral instead. The model's text is in the passages pop-up.") : null,
         h("div", { class: "d", style: "margin-top:4px" }, "Checks that each source line matches a passage header. It does not check the claims themselves (that is Objective 4).")]));
     }
   } else {
@@ -438,6 +451,7 @@ $("#composer").addEventListener("submit", e => {
     const hres = await (await fetch("/api/health")).json();
     const g = hres.generator;
     s.textContent = g.available ? `Generator: ${g.model} — ${g.backend}.` : `Generator unavailable: ${g.problem}`;
+    if (g.disclaimer) $("#bannerGen").textContent = g.disclaimer.replace(/^Proof of concept\.\s*/, "");
   } catch (_) {
     s.textContent = "Server not reachable.";
   }

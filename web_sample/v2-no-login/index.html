@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC-PnC Student Helpdesk — sample preview</title>
+<link rel="stylesheet" href="styles.css">
+<script src="samples.js" defer></script>
+<script src="sample.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============================================================ sidebar -->
+  <aside class="side" aria-label="Helpdesk">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">PnC</div>
+      <div>
+        <div class="brand-name">Student Helpdesk</div>
+        <div class="brand-sub">University of Cabuyao</div>
+      </div>
+    </div>
+
+    <button type="button" class="new-q" id="newQ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      New question
+    </button>
+
+    <nav class="side-sec" aria-label="Topics">
+      <div class="side-h">Topics</div>
+      <div id="sideTopics"></div>
+    </nav>
+
+    <div class="side-sec dev-block" aria-label="Sample questions">
+      <div class="side-h">Sample questions · by path</div>
+      <div id="sideSamples"></div>
+    </div>
+
+    <div class="side-sec">
+      <div class="side-h">Answers come only from</div>
+      <ul class="manuals">
+        <li>Student Manual</li>
+        <li>Internship Manual</li>
+        <li>Student Research and Innovation Manual</li>
+      </ul>
+    </div>
+
+    <p class="side-foot"><b>Sample preview.</b> Answers are prepared from the manuals in the format the fine-tuned model is trained to use. No search or model is running, and nothing here is a result.</p>
+  </aside>
+
+  <!-- ============================================================ main -->
+  <div class="main">
+    <header class="bar">
+      <div class="bar-brand" aria-hidden="true"><span class="seal sm">PnC</span>Student Helpdesk</div>
+      <span class="pill" title="Answers are prepared samples. No search or model is running.">Sample preview</span>
+      <div class="spacer"></div>
+      <button type="button" id="devToggle" class="switch" aria-pressed="false"><span class="txt-long">Developer view</span><span class="txt-short">Dev</span><span class="knob" aria-hidden="true"></span></button>
+    </header>
+
+    <div class="panel-note"><b>Developer view is on.</b> Each answer shows the path it takes through the system and why. Students see the same page without these panels.</div>
+
+    <main class="thread" id="convo" aria-live="polite">
+      <section class="hello" id="hello">
+        <h1>What do you need to know?</h1>
+        <p>Ask about university policies and services. I answer from the official manuals and show where each answer comes from. If the manuals don't cover it, I'll tell you which office does.</p>
+        <div class="suggest" id="suggest"></div>
+      </section>
+      <noscript><p>This page needs JavaScript.</p></noscript>
+    </main>
+
+    <div class="dock">
+      <div class="dock-in">
+        <div class="demo-strip" id="demoStrip"><div class="hdr">Sample questions, by the path they take.</div></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <input type="text" id="q" maxlength="500" placeholder="Ask about enrolment, grades, the library…" aria-label="Your question">
+          <button class="send" id="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </form>
+        <p class="hint">Every answer names the manual, page and office it comes from.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

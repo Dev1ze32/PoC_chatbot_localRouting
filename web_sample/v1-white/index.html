@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC-PnC Student Helpdesk — sample preview</title>
+<link rel="stylesheet" href="styles.css">
+<script src="samples.js" defer></script>
+<script src="sample.js" defer></script>
+</head>
+<body>
+
+<div class="banner" role="note"><strong>SAMPLE PREVIEW</strong> · Every answer here is a prepared sample, written from the university manuals in the format the fine-tuned model is trained to use. No search or model is running, and nothing here is a result.</div>
+
+<header class="top">
+  <div class="top-in">
+    <div class="mark" aria-hidden="true">PnC</div>
+    <div>
+      <div class="brand-name">UC-PnC Student Helpdesk</div>
+      <div class="brand-sub">Answers from the university's official manuals</div>
+    </div>
+    <div class="spacer"></div>
+    <button type="button" id="devToggle" class="switch" aria-pressed="false"><span class="txt-long">Developer view</span><span class="txt-short">Dev</span><span class="knob" aria-hidden="true"></span><span class="state" aria-hidden="true"></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="panel-note"><b>Developer view is on.</b> Each answer shows the path it takes through the system and why. Students see the same page without these panels. Sample questions are listed above the message box.</div>
+
+  <div class="convo" id="convo" aria-live="polite">
+    <div class="welcome">
+      <div class="who"><span class="dot" aria-hidden="true">PnC</span>Student Helpdesk</div>
+      <div class="card">
+        <h2>Hi! I'm the UC-PnC Student Helpdesk.</h2>
+        <p>I answer from the university's official manuals and show you exactly where each answer comes from. If the manuals don't cover your question, I'll tell you which office handles it.</p>
+        <div class="chips" data-topics></div>
+      </div>
+    </div>
+    <noscript><div class="card"><p class="lead">This page needs JavaScript.</p></div></noscript>
+  </div>
+</main>
+
+<div class="dock">
+  <div class="dock-in">
+    <div class="demo-strip" id="demoStrip">
+      <div class="hdr">Sample questions, by the path they take. Click one to ask it.</div>
+    </div>
+    <form class="composer" id="composer" autocomplete="off">
+      <input type="text" id="q" maxlength="500" placeholder="Ask about enrolment, grades, the library…" aria-label="Your question">
+      <button class="send" id="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </form>
+    <p class="hint">Answers come only from the Student Manual, Internship Manual, and Student Research and Innovation Manual.</p>
+  </div>
+</div>
+
+</body>
+</html>
