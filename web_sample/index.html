@@ -123,10 +123,10 @@
   <!-- ============================================================ sidebar -->
   <aside class="side" aria-label="Helpdesk">
     <div class="brand">
-      <div class="seal" aria-hidden="true">PnC</div>
+      <img class="seal-img" src="assets/seal.png" alt="" aria-hidden="true">
       <div>
         <div class="brand-name">Student Helpdesk</div>
-        <div class="brand-sub">University of Cabuyao</div>
+        <div class="brand-sub" role="img" aria-label="University of Cabuyao">University of Cabuyao</div>
       </div>
     </div>
 
@@ -169,7 +169,7 @@
   <!-- ============================================================ main -->
   <div class="main">
     <header class="bar">
-      <div class="bar-brand" aria-hidden="true"><span class="seal sm">PnC</span>Student Helpdesk</div>
+      <div class="bar-brand" aria-hidden="true"><img class="seal-img sm" src="assets/seal.png" alt="">Student Helpdesk</div>
       <span class="pill" title="Answers are prepared from the manuals in the format the fine-tuned model is trained to use. No search or model is running, and nothing here is a result.">Sample preview</span>
       <div class="spacer"></div>
       <!-- Hidden 22 Oct: the Developer view switch is off for now. Restore this line to bring it back.
@@ -199,7 +199,7 @@
           <input type="text" id="q" maxlength="500" placeholder="Ask about enrolment, grades, the library…" aria-label="Your question">
           <button class="send" id="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
         </form>
-        <p class="hint">The helpdesk uses AI and can make mistakes. Check important matters with the office named in the answer. Your questions are not saved.</p>
+        <p class="hint">The helpdesk uses AI and can make mistakes.</p>
       </div>
     </div>
   </div>

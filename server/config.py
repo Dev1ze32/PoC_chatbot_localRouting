@@ -71,9 +71,9 @@ DOC_TITLES = {"HDBK": "Student Manual",
               "INTN": "Internship Manual",
               "RSCH": "Student Research and Innovation Manual"}
 
-SCOPE_MESSAGE = ("I can only help with questions about UC-PnC student policies and "
-                 "services, from the Student Manual, the Internship Manual, and the "
-                 "Student Research and Innovation Manual.")
+# No manual names (user, 23 Oct). The page follows it with the topic buttons.
+SCOPE_MESSAGE = ("Sorry, that's outside what I can help with. I can answer questions "
+                 "about UC-PnC student policies and services, such as:")
 REFERRAL_NO_PASSAGE = "I couldn't find this in the university manuals."
 REFERRAL_DECLINED = "The manual passages I found don't answer this."
 REFERRAL_UNVERIFIED = ("I found related passages, but I couldn't confirm an answer "

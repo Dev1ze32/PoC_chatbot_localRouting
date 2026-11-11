@@ -190,7 +190,7 @@ window.SAMPLES = [
    "campus"
   ],
   "path": "C",
-  "answer": "I can only help with questions about UC-PnC student policies and services, from the Student Manual, the Internship Manual, and the Student Research and Innovation Manual."
+  "answer": "Sorry, that's outside what I can help with. I can answer questions about UC-PnC student policies and services, such as:"
  },
  {
   "id": "c2",
@@ -202,7 +202,7 @@ window.SAMPLES = [
    "thesi"
   ],
   "path": "C",
-  "answer": "I can only help with questions about UC-PnC student policies and services, from the Student Manual, the Internship Manual, and the Student Research and Innovation Manual."
+  "answer": "Sorry, that's outside what I can help with. I can answer questions about UC-PnC student policies and services, such as:"
  },
  {
   "id": "c3",
@@ -242,4 +242,4 @@ window.SAMPLES = [
   ]
  }
 ];
-window.SAMPLE_TEXT = {"scope": "I can only help with questions about UC-PnC student policies and services, from the Student Manual, the Internship Manual, and the Student Research and Innovation Manual.", "decline": "The provided manual passages do not answer this question."};
+window.SAMPLE_TEXT = {"scope": "Sorry, that's outside what I can help with. I can answer questions about UC-PnC student policies and services, such as:", "decline": "The provided manual passages do not answer this question."};

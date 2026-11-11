@@ -7,6 +7,12 @@
  * No scores, cut-offs, timings or counts are shown anywhere: those are results,
  * and results belong to Chapters 4 and 5.
  *
+ * LIVE MODE: served by the PoC server (http://127.0.0.1:8000/helpdesk/), questions
+ * go to the real pipeline through /api/ask: Gate 0, search, the gates, and the
+ * stand-in generator (gpt-4o-mini or the Colab Llama, per POC_GENERATOR in .env).
+ * Opened from disk or another static server (VS Code Live Server), there is no
+ * /api/health and the prepared samples answer, as before.
+ *
  * Screenshots: index.html?q=a1,b1,c1&dev=1 asks those samples on load.
  * The earlier all-white design is kept in v1-white/.
  */
@@ -158,8 +164,15 @@ function replyC(s) {
   const lang = s.kind === "language";
   return h("div", { class: "reply c", "aria-label": lang ? "English only" : "Outside scope" },
     tag(lang ? "PATH C · INITIAL CHECK · NOT ENGLISH" : "PATH C · OUT OF SCOPE"),
-    h("p", {}, s.answer, lang ? " For example, you could ask about:" : " You could ask about:"),
+    h("p", {}, s.answer, lang ? " For example, you could ask about:" : ""),   // the scope message ends in "such as:"
     topicChips());
+}
+
+// Live mode only: the generator is missing or its call failed.
+function replyError(s) {
+  return h("div", { class: "reply c", "aria-label": "Not answered" },
+    tag("LIVE · NOT ANSWERED"),
+    h("p", {}, "Sorry, I couldn't answer that just now. Please try again in a moment."));
 }
 
 function replyNone() {
@@ -254,6 +267,76 @@ function trace(s) {
   return wrap(steps, "Sample preview: nothing was searched or generated. This shows the path the question takes through the system.");
 }
 
+// Live mode: the same steps, read from the server's trace. No numbers, and no model
+// name: the page is shown as a sample (user, 22 Oct).
+function traceLive(s) {
+  const r = s.live, t = r.trace, g = t.generator;
+  const steps = [];
+  let n = 1;
+  const add = (...a) => steps.push(step(n++, ...a));
+
+  if (r.answer_source === "multiple_questions" || r.answer_source === "language_notice") {
+    const lang = r.answer_source === "language_notice";
+    add("Gate 0 · Initial check", [verdict(false), lang ? " — not written in English." : " — more than one question."]);
+    add("Search and model", "Skipped. No model is used.", true);
+    add("Result", h("b", {}, lang ? "Path C · language notice" : "Path C · one question at a time"));
+    return wrap(steps, "Sample preview. This shows the path the question takes through the system.");
+  }
+
+  add("Gate 0 · Initial check", [verdict(true), " — English, one question."]);
+  add("Question received", ["What the keyword search sees (stemmed words):",
+    h("div", { class: "toks" }, (t.tokens || []).join(" · ") || "—")]);
+  add("Searched the manuals, two ways", "Keyword search (BM25) and meaning search (BGE-small embeddings), over the same passages.");
+  const g1 = t.gate1;
+  add("Gate 1 · Evidence", [verdict(g1.passed), g1.passed
+    ? ` — the ${[g1.lexical_ok && "keyword", g1.dense_ok && "meaning"].filter(Boolean).join(" and ")} search found a strong enough match.`
+    : " — no passage matches strongly enough on either search."]);
+
+  if (g1.passed) {
+    add("Gate 2 · Scope", "Not needed: evidence was already found.", true);
+    add("Combined ranking", "Reciprocal rank fusion (RRF) merges the two lists; the top-k passages go to the model.");
+    const gen = [h("div", { class: "gen" },
+      h("span", { class: "now" }, g.declined ? "The model read the passages." : "The model wrote the answer from the passages."))];
+    if (g.declined) {
+      gen.push(h("div", { class: "d sub" }, "The model replied with the decline sentence: the passages don't answer this question, so the student is referred."));
+    }
+    if (r.model_io && r.model_io.output) {
+      gen.push(h("details", { class: "more raw" },
+        h("summary", {}, "Show the model's raw output"),
+        h("div", { class: "passage" }, r.model_io.output)));
+    }
+    add("Writing the answer", gen);
+    if (!g.declined) {
+      const ok = t.citation_check.status === "passed";
+      add("Citation check", [verdict(ok), ok
+        ? " — every source line matches a passage the model was given."
+        : " — a source line doesn't match the passages given, so the answer is withheld and the student is referred."]);
+    }
+  } else {
+    const inScope = t.gate2.in_scope;
+    add("Gate 2 · Scope", [verdict(inScope), inScope
+      ? " — close to the example questions about the university."
+      : " — not about the university."]);
+  }
+
+  if (r.path === "B") {
+    add("Choosing the office", s.offices.length
+      ? `Keyword rule (draft) matched ${quote(s.offices[0].keywords_hit)} → ${s.offices[0].name}.`
+      : "Keyword rule (draft) matched nothing. No office named.");
+    add("Writing the referral", h("div", { class: "gen" },
+      h("span", { class: "now" }, "Built from the office list, with a fixed wording."),
+      h("span", { class: "full" }, "The referral names only the office chosen from the office list.")));
+  }
+  if (r.path === "C") {
+    add("Writing the answer", h("div", { class: "gen" },
+      h("span", { class: "now" }, "No model call."),
+      h("span", { class: "full" }, "The fixed message is sent without reaching the model.")));
+  }
+  const label = { A: "Path A · cited answer", B: "Path B · referral, no citations", C: "Path C · out of scope, fixed message" }[r.path];
+  add("Result", h("b", {}, label));
+  return wrap(steps, "Sample preview. This shows the path the question takes through the system.");
+}
+
 function wrap(steps, foot) {
   return h("div", { class: "trace" },
     h("div", { class: "trace-h" }, "How this answer was made"),
@@ -264,7 +347,7 @@ function wrap(steps, foot) {
 // ------------------------------------------------------------------ turns
 function assistantShell() {
   const col = h("div", { class: "col" },
-    h("div", { class: "who" }, h("span", { class: "seal xs", "aria-hidden": "true" }, "PnC"), "Helpdesk"),
+    h("div", { class: "who" }, h("img", { class: "seal-img xs", src: "assets/seal.png", alt: "", "aria-hidden": "true" }), "Helpdesk"),
     h("div", { class: "reply pending" }, h("span", { class: "typing", "aria-label": "Thinking" }, h("i"), h("i"), h("i")),
       h("span", { class: "typing-label" }, "Searching the manuals…")));
   return h("div", { class: "turn-a" }, col, h("div", { class: "trace-slot" }));
@@ -272,16 +355,17 @@ function assistantShell() {
 
 function fill(turn, s) {
   const col = turn.querySelector(".col");
-  const reply = !s ? replyNone() : s.path === "A" ? replyA(s) : s.path === "B" ? replyB(s) : replyC(s);
+  const reply = !s ? replyNone() : s.path === "A" ? replyA(s) : s.path === "B" ? replyB(s)
+    : s.path === "E" ? replyError(s) : replyC(s);
   col.replaceChild(reply, col.querySelector(".reply"));
-  if (!s) return;
+  if (!s || s.path === "E") return;
   const how = h("button", { type: "button", class: "how", "aria-expanded": "false" }, "How was this answered?");
   how.addEventListener("click", () => {
     const open = turn.classList.toggle("open");
     how.setAttribute("aria-expanded", String(open));
   });
   col.append(h("div", { class: "how-row" }, how));
-  turn.querySelector(".trace-slot").append(trace(s));
+  turn.querySelector(".trace-slot").append(s.live ? traceLive(s) : trace(s));
 }
 
 const pause = ms => new Promise(r => setTimeout(r, ms));
@@ -295,16 +379,67 @@ async function ask(question, instant = false) {
   const q = h("div", { class: "turn-q" }, h("div", { class: "bubble" }, question));
   const turn = assistantShell();
   convo.append(q, turn);
-  if (!instant) {
-    q.scrollIntoView({ behavior: "smooth", block: "start" });
-    await pause(650);
+  if (!instant) q.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (LIVE) fill(turn, await askLive(question));
+  else {
+    if (!instant) await pause(650);
+    fill(turn, byQuestion[norm(question)]);
   }
-  fill(turn, byQuestion[norm(question)]);
   busy = false;
   sendBtn.disabled = false;
   if (!instant) input.focus();
 }
 window.ask = ask;
+
+// ------------------------------------------------------------------ live mode
+let LIVE = null;      // the server's generator info, when served by the PoC server
+
+async function detectLive() {
+  if (location.protocol === "file:") return;
+  try {
+    const r = await fetch("/api/health", { cache: "no-store" });
+    if (r.ok) LIVE = (await r.json()).generator;
+  } catch (_) { /* not the PoC server: samples answer */ }
+}
+
+async function askLive(question) {
+  try {
+    const r = await fetch("/api/ask", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }) });
+    const data = await r.json();
+    if (!r.ok) return { path: "E", error: data.detail || `The server answered ${r.status}.` };
+    return fromLive(data);
+  } catch (_) {
+    return { path: "E", error: "The helpdesk server isn't responding. Is run_server.sh still running?" };
+  }
+}
+
+// The server's response contract -> the shape the reply builders above use.
+// Path B keeps the agreed two-line referral: why, then the one office to go to.
+function fromLive(r) {
+  const base = { live: r, question: r.question, path: r.path };
+  if (r.path === "A" && r.answer_source !== "generated") {
+    console.warn(`Helpdesk: ${r.error}`);      // the reason stays in the browser console
+    return { ...base, path: "E", error: r.error };
+  }
+  if (r.path === "A") return { ...base, kind: "answer", answer: r.answer, citations: r.citations };
+  if (r.path === "B") {
+    const office = r.offices[0];
+    return { ...base, kind: r.answer_source === "model_declined" ? "declined" : "referral",
+      referral: `${r.lead}\n${office ? `Please go to the ${office.name} for more information.` : r.answer}`,
+      offices: office ? [office] : [] };
+  }
+  const kind = { multiple_questions: "multi", language_notice: "language" }[r.answer_source] || "scope";
+  return { ...base, kind, answer: r.answer, suggestions: r.suggestions };
+}
+
+// Live mode still reads "Sample preview" and names no model (user, 22 Oct). Only the
+// tooltip changes, because "no search or model is running" is no longer true.
+function showLiveBadge() {
+  $(".bar .pill").title = "A sample of the helpdesk's design.";
+  if (!LIVE.available) console.warn(`Helpdesk: the generator is not available: ${LIVE.problem}`);
+}
 
 function reset() {
   convo.replaceChildren(hello);
@@ -320,8 +455,25 @@ $("#suggest").append(...TOPICS.map(t =>
     h("span", { class: "tile-q" }, t.q),
     h("span", { class: "tile-src" }, t.doc))));
 
+// Sidebar topic icons (line icons), picked from the topic's words; a question mark otherwise.
+const TOPIC_ICONS = [
+  [/borrow|librar|book/i, '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>'],
+  [/record|grade|transcript/i, '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/>'],
+  [/intern/i, '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>'],
+  [/defen|research|proposal|thesis/i, '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>'],
+];
+const QUESTION_ICON = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>';
+function topicIcon(label) {
+  const span = h("span", { class: "topic-ic", "aria-hidden": "true" });
+  const paths = (TOPIC_ICONS.find(([re]) => re.test(label)) || [null, QUESTION_ICON])[1];
+  span.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  return span;
+}
+
 $("#sideTopics").append(...TOPICS.map(t =>
-  h("button", { type: "button", class: "side-item", onclick: () => ask(t.q) }, t.label)));
+  h("button", { type: "button", class: "side-item topic", onclick: () => ask(t.q) },
+    topicIcon(t.label),
+    h("span", { class: "topic-t" }, t.label))));
 
 const sampleGroups = () => DEMO.map(([cls, label, ids]) => h("div", { class: "grp" },
   h("div", { class: `grp-h ${cls}` }, label),
@@ -453,6 +605,8 @@ $("#composer").addEventListener("submit", e => {
 });
 
 (async () => {
+  await detectLive();
+  if (LIVE) showLiveBadge();
   const P = new URLSearchParams(location.search);
   let dev = false;
   if (devToggle) {   // a remembered "on" would be stuck with the switch hidden

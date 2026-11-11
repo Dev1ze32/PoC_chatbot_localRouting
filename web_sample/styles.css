@@ -1,7 +1,9 @@
 /* UC-PnC Student Helpdesk — SAMPLE preview, v2 design (light, not white).
-   Warm stone page, sage sidebar, off-white panels: low contrast so screenshots
-   sit quietly on a manuscript page, even printed in grayscale.
-   Colour is used as tint and thin rules, never as large dark blocks.
+   Colours follow the sign-in page (22 Oct, adviser's request): the sidebar is the banner's
+   university-green half with the real seal and the blackletter name; the page is a neutral
+   off-white like the banner's white half; the accent is the university green #0f5f31.
+   Elsewhere colour stays a tint and thin rules. The warm-stone/sage version is in the
+   *.bak-20261022-colors files.
    No web fonts (the page opens from disk with no internet).
    Light is the default, so screenshots stay light. Dark mode (22 Oct) is a choice in the
    profile pop-up, saved in this browser only; ?theme=dark shows it for screenshots.
@@ -13,32 +15,41 @@
      Path C  plain message + topic buttons                                   */
 
 :root {
-  --app: #f2f1ec;          /* page: warm stone */
-  --side: #e7e9e3;         /* sidebar: sage stone */
-  --panel: #fbfaf7;        /* cards, composer, trace */
-  --panel-2: #f5f4ef;
-  --ink: #1c231f;
-  --ink-2: #3e4742;
-  --muted: #6a726c;
-  --line: #d8dad2;
-  --line-2: #e3e4dc;
-  --green: #2e5b45;
-  --green-ink: #24493a;
-  --green-wash: #e0e9e1;
-  --green-line: #c3d3c6;
+  --app: #f4f6f3;          /* page: neutral off-white, like the banner's white half */
+  --side: #0f5f31;         /* sidebar: the sign-in banner's university green */
+  --side-ink: #fff;
+  --side-ink-2: rgba(255, 255, 255, .8);
+  --side-muted: rgba(255, 255, 255, .6);
+  --side-line: rgba(255, 255, 255, .16);
+  --side-hover: rgba(255, 255, 255, .1);
+  --panel: #fcfdfc;        /* cards, composer, trace */
+  --panel-2: #f2f5f2;
+  --ink: #17211b;
+  --ink-2: #3a453e;
+  --muted: #65706a;
+  --line: #d5dcd6;
+  --line-2: #e3e8e4;
+  --green: #0f5f31;        /* the university green (sign-in page) */
+  --green-ink: #0b4a26;
+  --green-wash: #e1eee5;
+  --green-line: #b8d4c1;
   --gold: #b08c45;
   --gold-ink: #6f5424;
   --gold-wash: #f4eddf;
   --gold-line: #e3d5b8;
-  --ok: #2e5b45;
+  --ok: #0f5f31;
   --no: #93462a;
   --focus: #2f6fd6;
   --field: #fff;           /* inputs, tables, menus */
-  --tile-hover: #fdfdfb;
-  --hover: rgba(46, 91, 69, .08);
-  --ring: rgba(46, 91, 69, .12);
+  --tile-hover: #fff;
+  --hover: rgba(15, 95, 49, .08);
+  --ring: rgba(15, 95, 49, .14);
   --on-accent: #fff;       /* text on green / red buttons */
   --danger-wash: #f7ece6;
+  --office-wash: #f9eceb;  /* Path B office panel: light red (22 Oct) */
+  --office-line: #ecccc8;
+  --office-bar: #c0574a;
+  --office-ink: #9a3a2e;
   --danger-line: #e6cbbd;
   --danger-hover: #7a3a22;
   --shadow-card: 0 1px 2px rgba(30, 40, 34, .04), 0 10px 30px rgba(30, 40, 34, .06);
@@ -54,7 +65,8 @@
 /* dark mode: same stone-and-sage family, dimmed; accents lightened so they read on dark */
 :root[data-theme="dark"] {
   --app: #161a18;
-  --side: #1b201d;
+  --side: #18211c;         /* a dark surface with a hint of green, so it blends with the page */
+  --side-line: rgba(255, 255, 255, .09);
   --panel: #212724;
   --panel-2: #1c211e;
   --ink: #e5e8e3;
@@ -79,6 +91,10 @@
   --ring: rgba(140, 196, 165, .2);
   --on-accent: #101a14;
   --danger-wash: #34221c;
+  --office-wash: #33201f;
+  --office-line: #5b3631;
+  --office-bar: #d9786a;
+  --office-ink: #eda397;
   --danger-line: #5a372b;
   --danger-hover: #eda48a;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
@@ -99,24 +115,37 @@ button:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px 
 
 .app { display: grid; grid-template-columns: 268px minmax(0, 1fr); min-height: 100vh; }
 
-/* ---------------------------------------------------------------- seal */
-.seal {
-  width: 38px; height: 38px; flex: none; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--panel); color: var(--green);
-  border: 1.5px solid var(--green);
-  box-shadow: inset 0 0 0 2.5px var(--panel), inset 0 0 0 3.5px var(--gold-line);
-  font: 700 12.5px/1 var(--serif);
-}
-.seal.sm { width: 28px; height: 28px; font-size: 9.5px; box-shadow: none; }
-.seal.xs { width: 22px; height: 22px; font-size: 8px; border-width: 1px; box-shadow: none; }
-
 /* ---------------------------------------------------------------- sidebar */
 .side {
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
-  background: var(--side); border-right: 1px solid var(--line);
+  background: var(--side); color: var(--side-ink);
   padding: 18px 14px 14px; display: flex; flex-direction: column; gap: 20px;
 }
+.seal-img { flex: none; width: 40px; height: 40px; }
+.seal-img.sm { width: 30px; height: 30px; filter: none; }
+.seal-img.xs { width: 22px; height: 22px; filter: none; }
+
+/* everything inside the green sidebar: white text, translucent white rules and hovers */
+.side .brand-name { color: var(--side-ink); }
+.side .brand-sub { margin-top: 2px; font: 400 15px/1.15 "UC Blackletter", var(--serif); color: var(--side-ink-2); }
+
+/* topics: a small line icon before each label */
+.side .side-item.topic { display: flex; align-items: center; gap: 10px; }
+.topic-ic { flex: none; display: grid; color: var(--side-muted); }
+.topic-ic svg { width: 16px; height: 16px; }
+.side .side-item.topic:hover .topic-ic { color: var(--side-ink); }
+.side .clear-chat { background: rgba(255, 255, 255, .08); border-color: var(--side-line); color: var(--side-ink); }
+.side .clear-chat:hover { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .3); }
+.side .clear-chat svg { color: var(--side-ink); }
+.side .side-h { color: var(--side-muted); }
+.side .side-item { color: var(--side-ink-2); }
+.side .side-item:hover { background: var(--side-hover); color: var(--side-ink); }
+.side .grp-h.a, .side .grp-h.b, .side .grp-h.c { color: var(--side-ink-2); }
+.side .acct { border-top-color: var(--side-line); }
+.side .acct-btn:hover { background: var(--side-hover); border-color: var(--side-line); }
+.side .acct-k, .side .acct-btn > svg { color: var(--side-muted); }
+.side .acct-id { color: var(--side-ink); }
+.side .pf-avatar { background: rgba(255, 255, 255, .12); border-color: var(--side-line); color: var(--side-ink); }
 .brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px; }
 .brand-name { font: 700 17px/1.2 var(--serif); color: var(--green-ink); }
 .brand-sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
@@ -306,9 +335,9 @@ details.more > summary:hover, .how:hover { text-decoration: underline; text-unde
 .reply.b .lead { font-weight: 700; color: var(--ink); margin-bottom: 4px; }
 .office {
   margin: 12px 0; padding: 13px 16px 12px; border-radius: 12px;
-  background: var(--gold-wash); border: 1px solid var(--gold-line); border-left: 4px solid var(--gold);
+  background: var(--office-wash); border: 1px solid var(--office-line); border-left: 4px solid var(--office-bar);
 }
-.office-k { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-ink); }
+.office-k { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--office-ink); }
 .office-name { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.35; margin-top: 2px; }
 .office-div { font-size: 13px; color: var(--ink-2); }
 .office-does { font-size: 14px; color: var(--ink-2); margin: 8px 0 6px !important; }
@@ -331,7 +360,7 @@ details.more > summary:hover, .how:hover { text-decoration: underline; text-unde
 .pick:hover { border-color: var(--green-line); }
 
 /* "How was this answered?" */
-.how-row { margin-top: 12px; }
+.how-row { margin-top: 12px; display: none; }   /* hidden 22 Oct: remove "display: none" to bring it back */
 .how {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
   border: 0; background: none; padding: 2px 0;
@@ -718,7 +747,9 @@ body.pp { background: var(--app); }
   .app { grid-template-columns: minmax(0, 1fr); }
   .side { display: none; }
   .bar { padding: 10px 16px; }
-  .bar-brand { display: flex; align-items: center; gap: 8px; font: 700 15.5px/1.2 var(--serif); color: var(--green-ink); }
+  .bar { background: var(--side); border-bottom: 0; }
+  .bar-brand { display: flex; align-items: center; gap: 8px; font: 700 15.5px/1.2 var(--serif); color: var(--side-ink); }
+  .bar .pf-avatar { background: rgba(255, 255, 255, .12); border-color: var(--side-line); color: var(--side-ink); }
   .panel-note { margin: 12px 16px 0; }
   .thread { padding: 20px 16px 12px; }
   .dock { padding: 8px 16px 14px; }
@@ -749,3 +780,7 @@ body.pp { background: var(--app); }
 }
 @media (min-width: 561px) { .switch .txt-short { display: none; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* dark mode: the sidebar and the narrow top bar are a dark surface, so they need an edge */
+:root[data-theme="dark"] .side { border-right: 1px solid var(--line-2); }
+@media (max-width: 899px) { :root[data-theme="dark"] .bar { border-bottom: 1px solid var(--line-2); } }

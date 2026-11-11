@@ -1,7 +1,8 @@
 """The web server. One page, two endpoints, localhost only.
 
     python -m server.api            (from poc_thesis/)
-    -> open http://127.0.0.1:8000
+    -> open http://127.0.0.1:8000             the original PoC page (web/)
+    -> open http://127.0.0.1:8000/helpdesk/   the new design (web_sample/), answering live
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -40,6 +41,9 @@ def ask(body: Ask):
     return router.ask(q)
 
 
+# The new design (sign-in, profile, university colours). Served from here it answers
+# through /api/ask; opened from disk it shows its prepared samples instead.
+app.mount("/helpdesk", StaticFiles(directory=config.ROOT / "web_sample", html=True), name="helpdesk")
 app.mount("/", StaticFiles(directory=config.WEB, html=True), name="web")
 
 

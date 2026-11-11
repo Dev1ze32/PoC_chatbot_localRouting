@@ -1,0 +1,492 @@
+/* UC-PnC Student Helpdesk — SAMPLE preview front end (v2 design).
+ *
+ * Same responses as the live PoC (web/), unplugged: no server, no search, no
+ * model. Every answer comes from samples.js, built by tools/build_sample_site.py
+ * from the real manual passages. Opens straight from disk (double-click index.html).
+ *
+ * No scores, cut-offs, timings or counts are shown anywhere: those are results,
+ * and results belong to Chapters 4 and 5.
+ *
+ * Screenshots: index.html?q=a1,b1,c1&dev=1 asks those samples on load.
+ * The earlier all-white design is kept in v1-white/.
+ */
+"use strict";
+
+const SAMPLES = window.SAMPLES || [];
+const byId = Object.fromEntries(SAMPLES.map(s => [s.id, s]));
+const norm = q => String(q).toLowerCase().replace(/\s+/g, " ").replace(/[\s?.!]+$/, "").trim();
+const byQuestion = Object.fromEntries(SAMPLES.map(s => [norm(s.question), s]));
+
+// Topics: one prepared answer each (welcome tiles, sidebar, Path C buttons).
+const TOPICS = SAMPLES.filter(s => s.topic).map(s => ({ label: s.topic, q: s.question, doc: s.citations[0].document }));
+
+// Sample questions (developer view), grouped by the path each one takes.
+const DEMO = [
+  ["a", "A · Cited answer", ["a1", "a2", "a3", "a4"]],
+  ["b", "B · Office referral", ["b1", "b2"]],
+  ["c", "C · Out of scope", ["c1", "c2"]],
+  ["c", "C · Initial check", ["c3", "c4"]],
+];
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const convo = $("#convo");
+const hello = $("#hello");
+const input = $("#q");
+const sendBtn = $("#send");
+let busy = false;
+
+// ------------------------------------------------------------------ helpers
+function h(tag, attrs = {}, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c === null || c === undefined || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+
+// Plain lines become paragraphs; runs of "1. …" lines become one numbered list.
+function paragraphs(text) {
+  const out = [];
+  let list = null;
+  for (const line of String(text).split("\n").map(s => s.trim()).filter(Boolean)) {
+    const m = line.match(/^(\d+)[.)]\s+(.*)$/);
+    if (m) {
+      if (!list) out.push(list = h("ol", { start: m[1] }));
+      list.append(h("li", {}, m[2]));
+    } else {
+      list = null;
+      out.push(h("p", {}, line));
+    }
+  }
+  return out;
+}
+
+// "PART 3. STUDENT SUCCESS > CHAPTER IX LIBRARY SERVICES > …" -> "Part 3. Student Success › Chapter IX Library Services › …"
+function prettySection(s) {
+  const small = new Set(["and", "of", "the", "for", "in", "on", "to", "a", "an", "or", "at", "by", "ng"]);
+  const title = part => part === part.toUpperCase()
+    ? part.toLowerCase().split(" ").map((w, i) =>
+        /^(?=[ivx])x{0,3}(ix|iv|v?i{0,3})$/.test(w) ? w.toUpperCase()
+        : (i > 0 && small.has(w)) ? w
+        : w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+    : part;
+  return String(s).split(">").map(p => title(p.trim())).join(" › ");
+}
+
+const topicChips = () => h("div", { class: "chips" },
+  TOPICS.map(t => h("button", { type: "button", class: "chip", onclick: () => ask(t.q) }, t.label)));
+
+// ------------------------------------------------------------------ dev view
+// The switch is hidden for now (index.html, 22 Oct); ?dev=1 still turns the view on.
+const devToggle = $("#devToggle");
+function setDev(on) {
+  document.body.classList.toggle("dev", on);
+  if (!devToggle) return;
+  devToggle.setAttribute("aria-pressed", String(on));
+  try { localStorage.setItem("sampleDevView", on ? "1" : "0"); } catch (_) { /* private mode */ }
+}
+if (devToggle) devToggle.addEventListener("click", () => setDev(!document.body.classList.contains("dev")));
+
+// ------------------------------------------------------------------ replies
+const tag = text => h("div", { class: "tag" }, text);
+
+function replyA(s) {
+  return h("div", { class: "reply a", "aria-label": "Cited answer" },
+    tag("PATH A · CITED ANSWER"),
+    h("div", { class: "answer" }, paragraphs(s.answer)),
+    h("div", { class: "sources" },
+      h("div", { class: "sources-h" }, s.citations.length === 1 ? "Source" : "Sources"),
+      h("div", { class: "src-grid" }, s.citations.map((c, i) => h("div", { class: "src" },
+        h("div", { class: "src-top" },
+          h("span", { class: "src-n" }, String(i + 1)),
+          h("span", { class: "src-doc" }, c.document),
+          h("span", { class: "src-page" }, `${c.page} · ${c.year}`)),
+        h("div", { class: "src-sec" }, prettySection(c.section)),
+        h("div", { class: "src-office" }, c.office),
+        h("details", { class: "more" },
+          h("summary", {}, "Read the passage"),
+          h("div", { class: "passage" }, c.text)))))));
+}
+
+// The office names in a referral line, in bold.
+function boldOffices(line, offices) {
+  const names = offices.map(o => o.name);
+  if (!names.length) return line;
+  const esc = n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return line.split(new RegExp(`(${names.map(esc).join("|")})`)).map(part =>
+    names.includes(part) ? h("b", {}, part) : part);
+}
+
+// Referral: line 1 says the manuals don't cover it, line 2 names the office. Nothing more.
+function replyB(s) {
+  const [lead, go] = s.referral.split("\n");
+  return h("div", { class: "reply b", "aria-label": "Office referral" },
+    tag(s.kind === "declined" ? "PATH B · REFERRAL · MODEL DECLINED" : "PATH B · REFERRAL"),
+    h("p", { class: "lead" }, lead),
+    h("p", {}, boldOffices(go, s.offices)),
+    s.offices.map(o => h("div", { class: "office" },
+      h("div", { class: "office-k" }, "Office"),
+      h("div", { class: "office-name" }, o.name),
+      h("div", { class: "office-div" }, `${o.division} division`),
+      h("div", { class: "office-ref" }, `Listed in the Student Manual, p. ${o.page}`))),
+    h("p", { class: "fine" }, "I can only name offices from the list printed in the Student Manual."));
+}
+
+// A split-off question goes into the message box, not straight to the answer.
+function fillBox(q) {
+  input.value = q;
+  input.focus();
+  input.setSelectionRange(q.length, q.length);
+}
+
+function replyC(s) {
+  if (s.kind === "multi") {
+    return h("div", { class: "reply c", "aria-label": "One question at a time" },
+      tag("PATH C · INITIAL CHECK · ONE QUESTION AT A TIME"),
+      h("p", {}, s.answer),
+      h("div", { class: "picks" }, s.suggestions.map(q =>
+        h("button", { type: "button", class: "pick", onclick: () => fillBox(q) }, q))),
+      h("p", { class: "fine" }, "Tapping a question puts it in the message box, so you can edit it before sending."));
+  }
+  const lang = s.kind === "language";
+  return h("div", { class: "reply c", "aria-label": lang ? "English only" : "Outside scope" },
+    tag(lang ? "PATH C · INITIAL CHECK · NOT ENGLISH" : "PATH C · OUT OF SCOPE"),
+    h("p", {}, s.answer, lang ? " For example, you could ask about:" : " You could ask about:"),
+    topicChips());
+}
+
+function replyNone() {
+  return h("div", { class: "reply c", "aria-label": "No sample answer" },
+    tag("SAMPLE PREVIEW · NO PREPARED ANSWER"),
+    h("p", {}, "This preview only has prepared answers for its sample questions. Try one of these:"),
+    topicChips(),
+    h("p", { class: "fine" }, "Referral and out-of-scope samples are listed in Developer view."));
+}
+
+// ------------------------------------------------------------------ trace (no numbers)
+function step(n, title, body, skip = false) {
+  return h("li", { class: `step${skip ? " skip" : ""}` },
+    h("span", { class: "n" }, n),
+    h("div", {}, h("div", { class: "t" }, title), h("div", { class: "d" }, body)));
+}
+const verdict = ok => h("span", { class: ok ? "pass" : "fail" }, ok ? "✓ PASS" : "✗ FAIL");
+const quote = words => words.map(w => `“${w}”`).join(", ");
+
+function trace(s) {
+  const steps = [];
+  let n = 1;
+  const add = (...a) => steps.push(step(n++, ...a));
+
+  if (s.kind === "language" || s.kind === "multi") {
+    const lang = s.kind === "language";
+    add("Gate 0 · Initial check", [verdict(false), lang ? " — not written in English." : " — more than one question.",
+      lang ? null : h("div", { class: "d sub" }, s.suggestions.map(q => h("div", {}, `• ${q}`)))]);
+    add("Search and model", lang
+      ? "Skipped. The question isn't in English, so it never reaches the search or the model."
+      : "Skipped. One search and one answer per question; the student sends each one separately.", true);
+    add("Result", h("b", {}, lang ? "Path C · language notice" : "Path C · one question at a time"));
+    return wrap(steps, lang ? "English only, by design. No model is used." : "One question per message, by design. No model is used.");
+  }
+
+  add("Gate 0 · Initial check", [verdict(true), " — English, one question."]);
+  add("Question received", ["What the keyword search sees (stemmed words):", h("div", { class: "toks" }, s.tokens.join(" · "))]);
+  add("Searched the manuals, two ways", "Keyword search (BM25) and meaning search (BGE-small embeddings), over the same passages.");
+
+  const evidence = s.kind === "answer" || s.kind === "declined";
+  add("Gate 1 · Evidence", [verdict(evidence), evidence
+    ? " — a passage matches strongly enough. Rule: keyword or meaning."
+    : " — no passage matches strongly enough on either search."]);
+
+  if (evidence) {
+    add("Gate 2 · Scope", "Not needed: evidence was already found.", true);
+    add("Combined ranking", "Reciprocal rank fusion (RRF) merges the two lists; the top-k passages go to the model.");
+    const gen = [h("div", { class: "gen" },
+      h("span", { class: "now" }, s.kind === "declined"
+        ? "The study's fine-tuned 4-bit Llama 3.2 3B (with its QLoRA adapter) reads the passages, offline."
+        : "The study's fine-tuned 4-bit Llama 3.2 3B (with its QLoRA adapter) writes the answer from the passages, offline."),
+      h("span", { class: "full" }, "Sample: written for this preview in the format the model is trained to produce."))];
+    if (s.kind === "declined") {
+      gen.push(h("div", { class: "d sub" },
+        `The model replied with the decline sentence: “${window.SAMPLE_TEXT.decline}” The passages are on the topic but don't answer this question, so the student is referred.`));
+    }
+    gen.push(h("details", { class: "more raw" },
+      h("summary", {}, "Show the model's raw output (sample)"),
+      h("div", { class: "passage" }, s.model_output)));
+    add("Writing the answer", gen);
+    if (s.kind === "answer") {
+      add("Citation check", [verdict(true), " — every source line matches a passage the model was given.",
+        h("div", { class: "d sub" }, "An answer whose sources don't match is never shown; the student gets a referral instead.")]);
+    }
+  } else {
+    const inScope = s.kind === "referral";
+    add("Gate 2 · Scope", [verdict(inScope), inScope
+      ? " — close to the example questions about the university."
+      : " — not about the university."]);
+  }
+
+  if (s.path === "B") {
+    add("Choosing the office", s.offices.length
+      ? `Keyword rule (draft) matched ${quote(s.offices[0].keywords_hit)} → ${s.offices.map(o => o.name).join("; ")}.`
+      : "Keyword rule (draft) matched nothing. No office named.");
+    add("Writing the referral", [h("div", { class: "gen" },
+      h("span", { class: "now" }, "The fine-tuned model writes a short referral naming the chosen office, offline. It adds no reasons, rooms, hours or requirements."),
+      h("span", { class: "full" }, "Sample: written for this preview in the format the model is trained to produce.")),
+      h("details", { class: "more raw" },
+        h("summary", {}, "Show the model's raw output (sample)"),
+        h("div", { class: "passage" }, s.referral))]);
+    add("Office name check", [verdict(true), " — the referral names only the office chosen from the office list.",
+      h("div", { class: "d sub" }, "If it named any other office, a fixed referral naming the chosen office is shown instead.")]);
+  }
+  if (s.path === "C") {
+    add("Writing the answer", h("div", { class: "gen" },
+      h("span", { class: "now" }, "No model call."),
+      h("span", { class: "full" }, "The fixed message is sent without reaching the model.")));
+  }
+  const label = { A: "Path A · cited answer", B: "Path B · referral, no citations", C: "Path C · out of scope, fixed message" }[s.path];
+  add("Result", h("b", {}, label));
+  return wrap(steps, "Sample preview: nothing was searched or generated. This shows the path the question takes through the system.");
+}
+
+function wrap(steps, foot) {
+  return h("div", { class: "trace" },
+    h("div", { class: "trace-h" }, "How this answer was made"),
+    h("ol", { class: "steps" }, steps),
+    h("p", { class: "foot" }, foot));
+}
+
+// ------------------------------------------------------------------ turns
+function assistantShell() {
+  const col = h("div", { class: "col" },
+    h("div", { class: "who" }, h("img", { class: "seal-img xs", src: "assets/seal.png", alt: "", "aria-hidden": "true" }), "Helpdesk"),
+    h("div", { class: "reply pending" }, h("span", { class: "typing", "aria-label": "Thinking" }, h("i"), h("i"), h("i")),
+      h("span", { class: "typing-label" }, "Searching the manuals…")));
+  return h("div", { class: "turn-a" }, col, h("div", { class: "trace-slot" }));
+}
+
+function fill(turn, s) {
+  const col = turn.querySelector(".col");
+  const reply = !s ? replyNone() : s.path === "A" ? replyA(s) : s.path === "B" ? replyB(s) : replyC(s);
+  col.replaceChild(reply, col.querySelector(".reply"));
+  if (!s) return;
+  const how = h("button", { type: "button", class: "how", "aria-expanded": "false" }, "How was this answered?");
+  how.addEventListener("click", () => {
+    const open = turn.classList.toggle("open");
+    how.setAttribute("aria-expanded", String(open));
+  });
+  col.append(h("div", { class: "how-row" }, how));
+  turn.querySelector(".trace-slot").append(trace(s));
+}
+
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+async function ask(question, instant = false) {
+  question = (question || "").trim();
+  if (!question || busy) return;
+  busy = true;
+  sendBtn.disabled = true;
+  document.body.classList.add("chatting");
+  const q = h("div", { class: "turn-q" }, h("div", { class: "bubble" }, question));
+  const turn = assistantShell();
+  convo.append(q, turn);
+  if (!instant) {
+    q.scrollIntoView({ behavior: "smooth", block: "start" });
+    await pause(650);
+  }
+  fill(turn, byQuestion[norm(question)]);
+  busy = false;
+  sendBtn.disabled = false;
+  if (!instant) input.focus();
+}
+window.ask = ask;
+
+function reset() {
+  convo.replaceChildren(hello);
+  document.body.classList.remove("chatting");
+  input.value = "";
+  input.focus();
+}
+
+// ------------------------------------------------------------------ boot
+$("#suggest").append(...TOPICS.map(t =>
+  h("button", { type: "button", class: "tile", onclick: () => ask(t.q) },
+    h("span", { class: "tile-t" }, t.label),
+    h("span", { class: "tile-q" }, t.q),
+    h("span", { class: "tile-src" }, t.doc))));
+
+// Sidebar topic icons (line icons), picked from the topic's words; a question mark otherwise.
+const TOPIC_ICONS = [
+  [/borrow|librar|book/i, '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>'],
+  [/record|grade|transcript/i, '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/>'],
+  [/intern/i, '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>'],
+  [/defen|research|proposal|thesis/i, '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>'],
+];
+const QUESTION_ICON = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>';
+function topicIcon(label) {
+  const span = h("span", { class: "topic-ic", "aria-hidden": "true" });
+  const paths = (TOPIC_ICONS.find(([re]) => re.test(label)) || [null, QUESTION_ICON])[1];
+  span.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  return span;
+}
+
+$("#sideTopics").append(...TOPICS.map(t =>
+  h("button", { type: "button", class: "side-item topic", onclick: () => ask(t.q) },
+    topicIcon(t.label),
+    h("span", { class: "topic-t" }, t.label))));
+
+const sampleGroups = () => DEMO.map(([cls, label, ids]) => h("div", { class: "grp" },
+  h("div", { class: `grp-h ${cls}` }, label),
+  ids.map(id => h("button", { type: "button", class: "side-item q", onclick: () => ask(byId[id].question) }, byId[id].question))));
+$("#sideSamples").append(...sampleGroups());
+$("#demoStrip").append(...sampleGroups());
+
+$("#clearChat").addEventListener("click", reset);
+
+// ------------------------------------------------------------------ sign-in gate (sample)
+// Screens: signin → consent (privacy notice, step 1) → register (step 2) → chat.
+// Consent comes BEFORE the account form: the notice must be given before any
+// personal information is entered (RA 10173, Sec. 16(b)). Nothing typed here is
+// stored anywhere, not even in the browser; a reload starts at sign-in again.
+// From chat, the profile pop-up leads to the notice, sign-out, or delete → deleted.
+let screen = "signin";
+let readFrom = "signin";
+let readFromProfile = false;
+const profile = $("#profile");
+document.querySelectorAll("[data-notice]").forEach(slot =>
+  slot.append($("#noticeTpl").content.cloneNode(true)));
+
+function go(name) {
+  const inside = name === "chat";
+  document.body.classList.toggle("in", inside);
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === `scr-${name}`));
+  if (name === "consent") { $("#agreeBox").checked = false; $("#agreeBtn").disabled = true; }
+  if (name === "consent" || name === "read") document.querySelectorAll(`#scr-${name} .doc-body`).forEach(b => { b.scrollTop = 0; });
+  if (!inside) window.scrollTo(0, 0);
+  screen = name;
+  const first = document.querySelector(`#scr-${name} .field input`);   // not the consent box: read first
+  if (first) first.focus();
+}
+
+function signIn(id) {
+  document.querySelectorAll("[data-acct]").forEach(el => { el.textContent = id; });
+  go("chat");
+  input.focus();
+}
+
+function signOut() {
+  closeProfile();
+  reset();
+  document.querySelectorAll(".gate input").forEach(el => { el.value = ""; });
+  document.querySelectorAll(".gate .err").forEach(el => { el.textContent = ""; });
+  go("signin");
+}
+
+// ------------------------------------------------------------------ profile (pop-up)
+// Delete account removes the account, consent record and sign-in records, and
+// withdraws consent (privacy.html, Sec. 9). It asks for the password first.
+function pfView(name) {
+  profile.querySelectorAll(".pf-view").forEach(v => { v.hidden = v.dataset.view !== name; });
+  if (name === "delete") { $("#dlPw").value = ""; $("#dlErr").textContent = ""; $("#dlPw").focus(); }
+}
+
+function openProfile(view = "main") {
+  if (!profile.open) profile.showModal();
+  pfView(view);
+}
+
+function closeProfile() {
+  if (profile.open) profile.close();
+}
+
+// Appearance: light by default; the choice is kept in this browser only (index.html <head>
+// applies it before the first paint, privacy.html follows it too).
+function setTheme(theme, save = true) {
+  if (theme === "dark") document.documentElement.dataset.theme = "dark";
+  else delete document.documentElement.dataset.theme;
+  profile.querySelectorAll("[data-theme-pick]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.themePick === theme)));
+  if (save) try { localStorage.setItem("helpdeskTheme", theme); } catch (_) { /* private mode */ }
+}
+profile.querySelectorAll("[data-theme-pick]").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.themePick)));
+setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light", false);
+
+document.querySelectorAll("[data-profile]").forEach(b => b.addEventListener("click", () => openProfile()));
+profile.querySelectorAll("[data-pf-close]").forEach(b => b.addEventListener("click", closeProfile));
+profile.querySelectorAll("[data-pf-view]").forEach(b => b.addEventListener("click", () => pfView(b.dataset.pfView)));
+profile.addEventListener("click", e => { if (e.target === profile) closeProfile(); });   // backdrop
+$("#pfRead").addEventListener("click", () => {
+  closeProfile();
+  readFrom = "chat";
+  readFromProfile = true;
+  go("read");
+});
+
+$("#deleteForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!$("#dlPw").value) { $("#dlErr").textContent = "Enter your password to confirm."; return; }
+  signOut();
+  go("deleted");
+});
+
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
+document.querySelectorAll("[data-read]").forEach(b => b.addEventListener("click", () => { readFrom = screen; go("read"); }));
+document.querySelectorAll("[data-signout]").forEach(b => b.addEventListener("click", signOut));
+$("#readClose").addEventListener("click", () => {
+  go(readFrom);
+  if (readFromProfile) { readFromProfile = false; openProfile(); }
+});
+$("#agreeBox").addEventListener("change", e => { $("#agreeBtn").disabled = !e.target.checked; });
+$("#agreeBtn").addEventListener("click", () => go("register"));
+$("#declineBtn").addEventListener("click", () => go("declined"));
+
+$("#signinForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const id = $("#siNum").value.trim();
+  if (!id || !$("#siPw").value) { $("#siErr").textContent = "Enter your student number and password."; return; }
+  $("#siErr").textContent = "";
+  signIn(id);
+});
+
+$("#registerForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const id = $("#rgNum").value.trim(), pw = $("#rgPw").value, pw2 = $("#rgPw2").value;
+  const problem = !id ? "Enter your student number."
+    : pw.length < 8 ? "Use a password of at least 8 characters."
+    : pw !== pw2 ? "The two passwords don't match." : "";
+  $("#rgErr").textContent = problem;
+  if (!problem) signIn(id);
+});
+$("#composer").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = input.value;
+  input.value = "";
+  ask(q);
+});
+
+(async () => {
+  const P = new URLSearchParams(location.search);
+  let dev = false;
+  if (devToggle) {   // a remembered "on" would be stuck with the switch hidden
+    try { dev = localStorage.getItem("sampleDevView") === "1"; } catch (_) { /* ignore */ }
+  }
+  if (P.has("dev")) dev = P.get("dev") === "1";
+  setDev(dev);
+  // ?screen=signin|consent|register|declined|read|deleted|chat picks the first screen (for screenshots);
+  // ?q=... or ?profile=main|delete implies chat. Chat screenshots show a placeholder account.
+  const start = P.get("screen") || (P.get("q") || P.get("profile") ? "chat" : "signin");
+  if (start === "chat") signIn(P.get("as") || "2021-00000 (sample)");
+  else go($(`#scr-${start}`) ? start : "signin");
+  for (const id of (P.get("q") || "").split(",").filter(id => byId[id])) {
+    await ask(byId[id].question, true);
+  }
+  if (P.get("profile")) {
+    openProfile(P.get("profile") === "delete" ? "delete" : "main");
+    document.activeElement.blur();   // no focus ring in screenshots
+  }
+})();
